@@ -37,43 +37,39 @@ def check_length(message):
 	check message length
 	return: string - error message
 	"""
-	size = len(message)
-	if size < 5:  # 5 is min message size
-		return b'ERRR~003~Bad Format message too short'
-	if int(msg.split('~')[0].decode()) !=  size len(msg.split('~')[0]):
-		return b'ERRR~003~Bad Format, incorrect message length'
-	return b''
+	return b'w'
 
 
 def take_screenshot(filePath):
     image = pyautogui.screenshot()
-    image.save(filePath)  
+    image.save(filePath)
 
 def send_file(filePath):
 	"""return random 1-10 """
-    pass
+	pass
 
 
 def get_dir(filePath):
 	"""return server name from os environment """
-    pass
-    
-    
+	pass
+
+
 def delete_file(filePath):
     os.remove(filePath)
-    
-    
-    
+
+
+
 def copy_file(fromPath, toPath):
-    shutil.copy()
-    
-    
-    
+    pass
+    #shutil.copy()
+
+
+
 def run_process(process):
     pass
-    
 
-    
+
+
 
 def protocol_build_reply(request):
 	"""
@@ -83,42 +79,42 @@ def protocol_build_reply(request):
 	string:return: reply
 	"""
 	request = request.decode("utf8")
-    fields = request.split('~')
-    request_code = fields[0]
+	fields = request.split('~')
+	request_code = fields[0]
 	if request_code == 'SCRN':
-        if (take_screenshot(field[1])[1]):    
-            reply = 'SCRN~SUCCES'
-        else:
-            reply = 'SCRN~ERR'
-            
+		if (take_screenshot(fields[1])[1]):
+			reply = 'SCRN~SUCCES'
+		else:
+			reply = 'SCRN~ERR'
+
 	elif request_code == 'SNDF':
-        send_file(fields[1]) 
+		send_file(fields[1])
 		reply ='SNDF~' + send_file(fields[1])
-        
+
 	elif request_code == 'DIRS':
 		reply ='DIRS' + '~' + get_dir(fields[1])
-        
-    elif request_code == 'DELF':
-        if (delete_file(fields[1])[1]):    
-            reply = 'DELF~SUCCES'
-        else:
-            reply = 'DELF~ERR'
-            
-    elif request_code == 'COPF':
-        if (copy_file(fields[1],fields[2])[1]):    
-            reply = 'COPF~SUCCES'
-        else:
-            reply = 'COPF~ERR'
-           
-    elif request_code == 'RUNS':
-        if (run_process(fields[1])[1]):    
-            reply = 'RUNS~SUCCES'
-        else:
-            reply = 'RUNS~ERR'
-            
+
+	elif request_code == 'DELF':
+		if (delete_file(fields[1])[1]):
+			reply = 'DELF~SUCCES'
+		else:
+			reply = 'DELF~ERR'
+
+	elif request_code == 'COPF':
+		if (copy_file(fields[1],fields[2])[1]):
+			reply = 'COPF~SUCCES'
+		else:
+			reply = 'COPF~ERR'
+
+	elif request_code == 'RUNS':
+		if (run_process(fields[1])[1]):
+			reply = 'RUNS~SUCCES'
+		else:
+			reply = 'RUNS~ERR'
+
 	elif request_code == 'EXIT':
 		reply= 'EXIT'
-       
+
 	else:
 		reply = 'ERRR~255~unknown command'
 		fields = ''
@@ -204,7 +200,7 @@ def main ():
 
 	#next line release the port
 	srv_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    
+
 	i = 1
 	while True:
 		print('\nMain thread: before accepting ...')

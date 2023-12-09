@@ -40,7 +40,7 @@ def menu():
     print('\n  6. run executeable file')
     print('\n  7. notify exit')
     print('\n  (8. some invalid data for testing)')
-    userInput = input(' which action do you want? (1-8) ' )
+    return input(' which action do you want? (1-8) ' )
 
 
 def protocol_build_request(from_user):
@@ -123,13 +123,13 @@ def handle_reply(reply): #reply is the message without the length field
 
 def recive_by_size(sock):
     size = ''
-    while not '~' in size:
-        size = sock.recv(4)
+    while not size.__contains__('~'):
+        size += sock.recv(4).decode()
     parts = size.split('~')
     size = parts[0]
     msg = parts[1]
     while len(msg) != size:
-        msg += sock.recv(size)
+        msg += sock.recv(size).decode()
     return msg
 
 
