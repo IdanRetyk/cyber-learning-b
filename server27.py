@@ -6,7 +6,7 @@ import time, threading, os, datetime
 import pyautogui
 
 all_to_die = False  # global
-SCREENSHOTS_FOLDER = rf'C:'
+SCREENSHOTS_FOLDER = rf'C:\cyber-learning-b\27screen'
 
 def logtcp(dir,tid, byte_data):
 	"""
@@ -43,15 +43,13 @@ def check_length(message):
 
 
 def take_screenshot(save_name):
-    img = pyautogui.screenshot()
-    img.save(rf'{SCREENSHOTS_FOLDER}\{save_name}.jpg')
-    return True
-    # try:
-    #     img = pyautogui.screenshot()
-    #     img.save(rf'{SCREENSHOTS_FOLDER}\{save_name}.jpg')
-    #     return True
-    # except Exception as err:
-    #     return False
+   
+    try:
+        img = pyautogui.screenshot()
+        img.save(rf'{SCREENSHOTS_FOLDER}\{save_name}.jpg')
+        return True
+    except Exception as err:
+        return False
 
 def send_file(filePath):
 	"""return random 1-10 """
