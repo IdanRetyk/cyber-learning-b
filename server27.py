@@ -6,7 +6,7 @@ import time, threading, os, datetime
 import pyautogui
 
 all_to_die = False  # global
-
+SCREENSHOTS_FOLDER = rf'C:'
 
 def logtcp(dir,tid, byte_data):
 	"""
@@ -26,7 +26,7 @@ def send_data(sock,tid,bdata):
 	e.g. from 'abcd' will send  b'00000004~abcd'
 	return: void
 	"""
-	bytearray_data = str(len(bdata)).encode() + b'~' + bdata
+	bytearray_data = str(len(bdata)).zfill(8).encode() + b'~' + bdata
 	sock.send(bytearray_data)
 	logtcp('sent',tid, bytearray_data)
 	print("")
@@ -37,12 +37,21 @@ def check_length(message):
 	check message length
 	return: string - error message
 	"""
-	return b'w'
+	return b''
 
 
-def take_screenshot(filePath):
-    image = pyautogui.screenshot()
-    image.save(filePath)
+
+
+def take_screenshot(save_name):
+    img = pyautogui.screenshot()
+    img.save(rf'{SCREENSHOTS_FOLDER}\{save_name}.jpg')
+    return True
+    # try:
+    #     img = pyautogui.screenshot()
+    #     img.save(rf'{SCREENSHOTS_FOLDER}\{save_name}.jpg')
+    #     return True
+    # except Exception as err:
+    #     return False
 
 def send_file(filePath):
 	"""return random 1-10 """
@@ -78,11 +87,12 @@ def protocol_build_reply(request):
 	Handle client request and prepare the reply info
 	string:return: reply
 	"""
-	request = request.decode("utf8")
+	request = request.decode()
 	fields = request.split('~')
 	request_code = fields[0]
+	print (request_code)
 	if request_code == 'SCRN':
-		if (take_screenshot(fields[1])[1]):
+		if (take_screenshot(fields[1])):
 			reply = 'SCRN~SUCCES'
 		else:
 			reply = 'SCRN~ERR'

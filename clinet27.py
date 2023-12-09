@@ -22,7 +22,7 @@ def send_data(sock, bdata):
     e.g. from 'abcd' will send  b'00000004~abcd'
     return: void
     """
-    bytearray_data = str(len(bdata)).encode() + b'~' + bdata
+    bytearray_data = str(len(bdata)).zfill(8).encode() + b'~' + bdata
     sock.send(bytearray_data)
     logtcp('sent', bytearray_data)
 
@@ -49,19 +49,19 @@ def protocol_build_request(from_user):
     return: string - msg code
     """
     if from_user == '1':
-        return 'SCRN~' + input ('enter path to save screenshot (double back slashes)')
+        return 'SCRN~' + input ('enter name the screen shot will be saved ')
     elif from_user == '2':
-        return 'SENF~' + input('enter file absolute or relative path(double back slashes)')
+        return 'SENF~' + input('enter file absolute or relative path ')
     elif from_user == '3':
-        return 'DIRS~' + input('enter directory absolute or relative path(double back slashes)')
+        return 'DIRS~' + input('enter directory absolute or relative path ')
     elif from_user == '4':
-        return 'DELF~' + input('enter file absolute or relative path(double back slashes)')
+        return 'DELF~' + input('enter file absolute or relative path ')
     elif from_user == '5':
-        pathFrom = input('enter file current location path(double back slashes)')
-        pathTo = input('enter file copy location path(double back slashes)')
+        pathFrom = input('enter file current location path')
+        pathTo = input('enter file copy location path')
         return 'COPF~' + pathFrom + '~' + pathTo 
     elif from_user == '6':
-        return 'RUNF~' + input('enter file absolute or relatvie path(double back slashes)')
+        return 'RUNF~' + input('enter file absolute or relatvie path ')
     elif from_user == '7':
         return 'EXIT'
     elif from_user == '8':
@@ -75,10 +75,10 @@ def protocol_parse_reply(reply):
     parse the server reply and prepare it to user
     return: answer from server string
     """
-
+   
     to_show = 'Invalid reply from server'
     try:
-        reply = reply.decode()
+        fields = reply
         if '~' in reply:
             fields = reply.split('~')
         code = fields[0]
@@ -93,7 +93,7 @@ def protocol_parse_reply(reply):
         elif code == 'ERRR':
             to_show = 'unknown command'
     except:
-        print ('Server replay bad format')
+       print ('Server replay bad format')
     return to_show
 
 
@@ -122,14 +122,18 @@ def handle_reply(reply): #reply is the message without the length field
 
 
 def recive_by_size(sock):
+    
     size = ''
     while not size.__contains__('~'):
         size += sock.recv(4).decode()
     parts = size.split('~')
-    size = parts[0]
+    size = int(parts[0])
+    
     msg = parts[1]
     while len(msg) != size:
+        
         msg += sock.recv(size).decode()
+    logtcp('recv',msg)
     return msg
 
 
@@ -162,16 +166,9 @@ def main(ip):
             if byte_data == b'':
                 print ('Seems server disconnected abnormal')
                 break
-            logtcp('recv',byte_data)
+           
             
-            # remove length field
-            fields = byte_data.split('~')  
-            byte_data = fields[1]
-            for i in fields:
-                if i > 1:
-                    bye_data += '~'
-                    byte_data += fields[i]
-            # /remove length field
+            
             
             handle_reply(byte_data)
 
