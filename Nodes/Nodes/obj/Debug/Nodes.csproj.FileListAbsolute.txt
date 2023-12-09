@@ -1,0 +1,7 @@
+C:\cyber-learning-b\Nodes\Nodes\obj\Debug\Nodes.csproj.AssemblyReference.cache
+C:\cyber-learning-b\Nodes\Nodes\obj\Debug\Nodes.csproj.CoreCompileInputs.cache
+C:\cyber-learning-b\Nodes\Nodes\bin\Debug\Nodes.exe.config
+C:\cyber-learning-b\Nodes\Nodes\bin\Debug\Nodes.exe
+C:\cyber-learning-b\Nodes\Nodes\bin\Debug\Nodes.pdb
+C:\cyber-learning-b\Nodes\Nodes\obj\Debug\Nodes.exe
+C:\cyber-learning-b\Nodes\Nodes\obj\Debug\Nodes.pdb
