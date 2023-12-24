@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{12E98470-D2C1-46A8-8788-2BB7332ACCE2}</ProjectGuid>
+    <ProjectGuid>{F00F1252-9BB3-4050-8679-E597971E808D}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Nodes</RootNamespace>
-    <AssemblyName>Nodes</AssemblyName>
+    <RootNamespace>hashmapMimush</RootNamespace>
+    <AssemblyName>hashmapMimush</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -43,11 +43,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Card.cs" />
-    <Compile Include="BInNode.cs" />
-    <Compile Include="BinNodeUtils.cs" />
-    <Compile Include="NodeUtils.cs" />
-    <Compile Include="Node.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{12E98470-D2C1-46A8-8788-2BB7332ACCE2}</ProjectGuid>
+    <ProjectGuid>{B18D344D-5A07-467A-80C3-650120FD259C}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Nodes</RootNamespace>
-    <AssemblyName>Nodes</AssemblyName>
+    <RootNamespace>binaryNumbers</RootNamespace>
+    <AssemblyName>binaryNumbers</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -43,11 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Card.cs" />
-    <Compile Include="BInNode.cs" />
-    <Compile Include="BinNodeUtils.cs" />
-    <Compile Include="NodeUtils.cs" />
-    <Compile Include="Node.cs" />
+    <Compile Include="Bnum.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

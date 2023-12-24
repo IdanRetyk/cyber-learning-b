@@ -51,7 +51,7 @@ def protocol_build_request(from_user):
     if from_user == '1':
         return 'SCRN~' + input ('enter name the screen shot will be saved ')
     elif from_user == '2':
-        return 'SENF~' + input('enter file absolute or relative path ')
+        return 'SNDF~' + input('enter file absolute or relative path ')
     elif from_user == '3':
         return 'DIRS~' + input('enter directory absolute or relative path ')
     elif from_user == '4':

@@ -281,26 +281,24 @@ namespace Nodes
         }
 
 
+        
+
+
 
 
 
         static void Main(string[] args)
         {
-            int[] arr1 = { 1, 2, 3,6,89,3,0 };
-            int[] arr2 = { 4,6,2,5,8,8,8 };
+            int[] arr1 = { 1,2,3,4,5,6};
+            int[] arr2 = { -90,6,2,5,8,8,-8 };
 
             Node<int> head1 = NodeUtils.CreateListFromArray(arr1);
-            Node<int> head2 = NodeUtils.CreateListFromArray(arr2);
+            BinNode<int> head2 = BinNodeUtils.CreateListFromArray(arr2);
 
             NodeUtils.PrintList(head1);
-            NodeUtils.PrintList(head2);
 
+            Console.WriteLine(NodeUtils.GetMiddle(head1));
 
-            CreateForkList(head1, head2, 4);
-            Console.WriteLine("After merge");
-            NodeUtils.PrintList(head1);
-            NodeUtils.PrintList(head2);
-            Console.WriteLine(GetForkNode(head1, head2)); 
 
             Console.ReadKey();
         }

@@ -3,7 +3,7 @@ __author__ = 'Yossi'
 # 2.6  client server October 2021
 import socket, random, traceback
 import time, threading, os, datetime
-import pyautogui
+import pyautogui, shutil
 
 all_to_die = False  # global
 SCREENSHOTS_FOLDER = rf'C:\cyber-learning-b\27screen'
@@ -52,8 +52,15 @@ def take_screenshot(save_name):
         return False
 
 def send_file(filePath):
-	"""return random 1-10 """
-	pass
+    
+	try:
+		with open(filePath,'r') as file:
+			print(file.read())
+			return file.read()
+	except Exception as err:
+		print(err)
+		return False
+	
 
 
 def get_dir(filePath):
@@ -62,13 +69,21 @@ def get_dir(filePath):
 
 
 def delete_file(filePath):
-    os.remove(filePath)
+	try:
+		os.remove(filePath)
+		return True
+	except:
+		return False
 
 
 
 def copy_file(fromPath, toPath):
-    pass
-    #shutil.copy()
+	try:
+		shutil.copy(fromPath,toPath)
+		return True
+	except:
+		return False
+    
 
 
 
@@ -96,8 +111,10 @@ def protocol_build_reply(request):
 			reply = 'SCRN~ERR'
 
 	elif request_code == 'SNDF':
-		send_file(fields[1])
-		reply ='SNDF~' + send_file(fields[1])
+		if (send_file(fields[1])):
+			reply ='SNDF~' + send_file(fields[1])
+		else:
+			reply ='ERRR~sendfileerror'
 
 	elif request_code == 'DIRS':
 		reply ='DIRS' + '~' + get_dir(fields[1])
@@ -130,10 +147,10 @@ def protocol_build_reply(request):
 
 
 def handle_request(request):
-	"""
-	Hadle client request
-	tuple :return: return message to send to client and bool if to close the client socket
-	"""
+	# """
+	# Hadle client request
+	# tuple :return: return message to send to client and bool if to close the client socket
+	# """
 	try:
 		request_code = request[:4]
 		to_send = protocol_build_reply(request)

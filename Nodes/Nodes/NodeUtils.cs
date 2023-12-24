@@ -511,5 +511,22 @@ namespace Nodes
                 head.SetNext(new Node<T>(value, head.GetNext()));
             }
         }
+
+
+
+        public static Node<T> GetMiddle<T>(Node<T> lst)
+        {
+            Node<T> slow = lst;
+            Node<T> fast = lst;
+
+            while (fast.GetNext() != null)
+            {
+                fast = fast.GetNext().GetNext();
+                slow = slow.GetNext();
+            }
+
+            return slow;
+        }
+
     }
 }

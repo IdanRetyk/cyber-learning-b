@@ -1,0 +1,7 @@
+C:\cyber-learning-b\binaryNumbers\binaryNumbers\bin\Debug\binaryNumbers.exe.config
+C:\cyber-learning-b\binaryNumbers\binaryNumbers\bin\Debug\binaryNumbers.exe
+C:\cyber-learning-b\binaryNumbers\binaryNumbers\bin\Debug\binaryNumbers.pdb
+C:\cyber-learning-b\binaryNumbers\binaryNumbers\obj\Debug\binaryNumbers.csproj.AssemblyReference.cache
+C:\cyber-learning-b\binaryNumbers\binaryNumbers\obj\Debug\binaryNumbers.csproj.CoreCompileInputs.cache
+C:\cyber-learning-b\binaryNumbers\binaryNumbers\obj\Debug\binaryNumbers.exe
+C:\cyber-learning-b\binaryNumbers\binaryNumbers\obj\Debug\binaryNumbers.pdb
