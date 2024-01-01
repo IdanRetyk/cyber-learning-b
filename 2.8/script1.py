@@ -30,9 +30,9 @@ def server(port):
 def main():
     port = 8000
     while (cont):
-        server(port)
+        clinet(port)
         if (cont):
-            clinet(port)
+            server(port)
         
         port += hash(port) % 100
 
