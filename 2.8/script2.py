@@ -25,7 +25,7 @@ def server(port):
     server.listen(10)
     c,a = server.accept()
     data = c.recv(1024)
-    if (data == "exit".encode()):
+    if (data == "exit".encode() or data == b''):
         cont = False
     print("B recived " + data.decode())
     server.close()
@@ -40,7 +40,7 @@ def main():
         cont = server(port)
         if (not cont):
             break
-        port += hash(port) % 101
+        port -= hash(port) % 101 * 10
         cont = clinet(port)
         
         for i in range(100): #its very unlikly the port will stay the same after this
