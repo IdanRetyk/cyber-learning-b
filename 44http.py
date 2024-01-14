@@ -111,7 +111,7 @@ def get_data_get(d):
         return area_of_triangle(command), command
 
     elif b'\\calculate-next?num=' in command and command != b'\\calculate-next?num=':
-        return get_num_plus_one(command), command
+        return get_next(command), command
 
     elif b'\\image?image-name=' in command and command.split(b'=')[1] != b'':
         return get_image(command), command
