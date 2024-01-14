@@ -47,7 +47,7 @@ def check_get_post(d):
     return b''
 
 
-def get_num_plus_one(command):
+def get_next(command):
     command = command.split(b'?')[1][4::].decode()
     if command.isnumeric():
         return str(int(command) + 1).encode()
