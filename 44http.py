@@ -1,91 +1,209 @@
-"""
-Http server
-by: Idan Retyk yud alef 3
-"""
+import socket
+import threading
+import os
+path='C:\\cyber-learning-b\\webroot'
 
 
-def handle_client(sock, tid , addr):
-	"""
-	Main client thread loop (in the server),
-	:param sock: client socket
-	:param tid: thread number
-	:param addr: client ip + reply port
-	:return: void
-	"""
-	global all_to_die
+def rec_amount(sock, size):
+    d = b''
+    while len(d) < size:
+        data = sock.recv(size - len(d))
+        if len(data) == 0:
+            return b''
+        d += data
+    return d
 
-	finish = False
-	print(f'New Client number {tid} from {addr}')
-	while not finish:
-		if all_to_die:
-			print('will close due to main server issue')
-			break
-		try:
-			byte_data = sock.recv(1000)  # todo improve it to recv by message size
-			if byte_data == b'':
-				print ('Seems client disconnected')
-				break
-			logtcp('recv',tid, byte_data)
-			err_size = check_length(byte_data)
-			if err_size != b'':
-				to_send = err_size
-			else:
-				byte_data = byte_data[9:]   # remove length field
-				to_send , finish = handle_request(byte_data)
-			if to_send != '':
-				send_data(sock, tid , to_send)
-			if finish:
-				time.sleep(1)
-				break
-		except socket.error as err:
-			print(f'Socket Error exit client loop: err:  {err}')
-			break
-		except Exception as  err:
-			print(f'General Error %s exit client loop: {err}')
-			print(traceback.format_exc())
-			break
+def http_recv(cli_sock):
+    d=b''
+#get the header
+    i=0
+    while True:
+        d+=cli_sock.recv(8*1024)
+        header_body=d.split(b'\r\n\r\n')
+        if header_body[0]!=d:
+            break
+    len_of_body_recv=len(header_body[1])
+    header=header_body[0]
+    parts=header.split(b'\r\n')
+    length_of_body=0
+    for i in parts:
+        if b'Content-Length' in i:
+            length_of_body=int(i.split(b' ')[1].decode())
+    length_of_body=length_of_body-len_of_body_recv
+    d+=rec_amount(cli_sock,length_of_body)
 
-	print(f'Client {tid} Exit')
-	sock.close()
+    return d
+
+def check_get_post(d):
+    header=d.split(b'\r\n\r\n')[0]
+    command_line=header.split(b'\r\n')[0]
+    command=command_line.split(b' ')[0]
+    if command==b'GET' or command==b'POST':
+        return command
+    return b''
 
 
-def main ():
-	global  all_to_die
-	"""
-	main server loop
-	1. accept tcp connection
-	2. create thread for each connected new client
-	3. wait for all threads
-	4. every X clients limit will exit
-	"""
-	threads = []
-	srv_sock = socket.socket()
 
-	srv_sock.bind(('127.0.0.1', 1233))
+def Get_num_plus_one(command):
+    command=command.split(b'?')[1][4::].decode()
+    if command.isnumeric():
+        return str(int(command)+1).encode()
+    return b''
+def area_of_triangle(command):
+    num1=command.split(b'?')[1].split(b'&')[0][7::].decode()
+    num2=command.split(b'?')[1].split(b'&')[1][6::].decode()
+    if num2.isnumeric() and num1.isnumeric():
+        num1=int(num1)
+        num2 = int(num2)
+        return str(0.5*num1*num2).encode()
+    return b''
+def Getimage(command):
+    path=command.split(b'=')[1]
+    data=b''
+    if os.path.exists('c:\\picture\\'+path.decode()):
+        with open('c:\\picture\\'+path.decode(),'rb') as file:
+            data=file.read()
+        return data
+    return b''
 
-	srv_sock.listen(20)
 
-	#next line release the port
-	srv_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+def Get_data_POST(d):
+    d=d.split(b'\r\n\r\n')
+    body=d[1]
+    header=d[0]
+    prop=header.split(b'\r\n')[1::]
+    command=header.split(b'\r\n')[0].split(b' ')[1]
 
-	i = 1
-	while True:
-		print('\nMain thread: before accepting ...')
-		cli_sock , addr = srv_sock.accept()
-		t = threading.Thread(target = handle_client, args=(cli_sock, str(i),addr))
-		t.start()
-		i+=1
-		threads.append(t)
-		if i > 100000000:     # for tests change it to 4
-			print('\nMain thread: going down for maintenance')
-			break
 
-	all_to_die = True
-	print('Main thread: waiting to all clints to die')
-	for t in threads:
-		t.join()
-	srv_sock.close()
-	print( 'Bye ..')
+    if b'/upload?file-name=' in command and command.split(b'=')[1]!=b'':
+        if not os.path.isdir("C:/picture"):
+            os.makedirs("C:/picture")
 
-if __name__ == "__main__":
+        with open('C:\\picture\\'+command.split(b'=')[1].decode(),'wb') as file:
+            file.write(body)
+        return b'',command,True
+    return b'',command,False
+def Get_data_GET(d):
+    global path
+    header=d.split(b'\r\n\r\n')
+    header=header[0]
+    command_line=header.split(b'\r\n')[0].split(b' ')
+    url=command_line[1]
+    command = url.replace(b'/', b'\\')
+
+
+    if command==b'\\':
+        with open(path+'\\index.html','rb') as file:
+            string=file.read()
+        return string,command
+
+
+
+    elif b'\\temp.html' in command:
+        return b'',command
+
+
+    elif b'\\calculate-area?height=' in command and b'&width=' in command:
+        return area_of_triangle(command),command
+
+
+    elif b'\\calculate-next?num=' in command and command!=b'\\calculate-next?num=':
+        return Get_num_plus_one(command),command
+
+    elif b'\\image?image-name=' in command and command.split(b'=')[1]!=b'':
+        return Getimage(command),command
+
+
+
+    elif os.path.exists(path+command.decode()):
+        with open(path+command.decode(),'rb') as file:
+            string=file.read()
+        return string,command
+
+    return b'',command
+
+def protocol_build_reply(body,status,command):
+    reply=b''
+    reply+=b'HTTP/1.0 '
+
+    if status==200:
+        reply += b'200 '
+        reply+=b'OK\r\n'
+    elif status==404:
+        reply += b'404 '
+        reply+=b'EROR\r\n'
+
+    elif status==403:
+        reply += b'403 '
+        reply += b'Forbidden\r\n'
+
+
+    reply+=b'Content-Length: '+str(len(body)).encode()
+
+    if b'calculate-area' in command:
+        reply += b'\r\n'
+        reply+=b'Content-Type: text/plain'
+
+    if b'calculate-next' in command:
+        reply += b'\r\n'
+        reply+=b'Content-Type: text/plain'
+
+    if b'jpg' in command:
+        reply += b'\r\n'
+        reply+=b'Content-Type: image/jpeg'
+
+    if b'js' in command:
+        reply += b'\r\n'
+        reply+=b'Content-Type: text/javascript; charset=UTF-8'
+
+    if b'css' in command:
+        reply += b'\r\n'
+        reply+=b'Content-Type: text/css'
+    reply+=b'\r\n\r\n'+body
+    return reply
+
+def handle_client(sock,tid,addr):
+    d=http_recv(sock)
+    type_of_message=check_get_post(d)
+    if type_of_message!=b'POST'and type_of_message!=b'GET':
+        print('Oh no! the message you got was not a Get or POST, bye bye')
+
+    else:
+        if type_of_message==b'POST':
+            data, command,ok = Get_data_POST(d)
+            if ok:
+                sock.send(protocol_build_reply(data, 200, command))
+            else:
+                sock.send(protocol_build_reply(data, 404, command))
+
+        else:
+            data,command=Get_data_GET(d)
+            if data!=b'':
+                sock.send(protocol_build_reply(data,200,command))
+            else:
+                if command==b'\\temp.html':
+                    sock.send(protocol_build_reply(data, 403, command))
+                else:
+
+                    sock.send(protocol_build_reply(data, 404,command))
+    sock.close()
+    print(f'clien number {tid} disconnected')
+
+
+def main():
+    print ('starting')
+    threads=[]
+    sock = socket.socket()
+    sock.bind(('0.0.0.0', 80))
+    sock.listen(50)
+    i=1
+    while True:
+        c, a = sock.accept()
+        print(f"new client!!! number {i} from {a}")
+        t=threading.Thread(target=handle_client,args=(c,str(i),a))
+        t.start()
+        i+=1
+        threads.append(t)
+    sock.close()
+if __name__=='__main__':
     main()
