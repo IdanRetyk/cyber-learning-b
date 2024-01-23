@@ -1,0 +1,7 @@
+C:\cyber-learning-b\helpFriends\helpFriends\bin\Debug\helpFriends.exe.config
+C:\cyber-learning-b\helpFriends\helpFriends\bin\Debug\helpFriends.exe
+C:\cyber-learning-b\helpFriends\helpFriends\bin\Debug\helpFriends.pdb
+C:\cyber-learning-b\helpFriends\helpFriends\obj\Debug\helpFriends.csproj.AssemblyReference.cache
+C:\cyber-learning-b\helpFriends\helpFriends\obj\Debug\helpFriends.csproj.CoreCompileInputs.cache
+C:\cyber-learning-b\helpFriends\helpFriends\obj\Debug\helpFriends.exe
+C:\cyber-learning-b\helpFriends\helpFriends\obj\Debug\helpFriends.pdb

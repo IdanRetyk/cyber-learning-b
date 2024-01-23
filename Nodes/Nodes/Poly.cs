@@ -4,16 +4,16 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-
 namespace Nodes
 {
     internal class Poly
     {
+        
         private Node<(int, int)> head;
 
         public Poly(Node<(int, int)> head)
         {
-            this.Node<(int, int)> = head;
+            this.head = head;
         }
 
         public Node<(int, int)> GetHead()
@@ -60,13 +60,32 @@ namespace Nodes
             }
         }
 
+        public double Calc(int x)
+        {
+            double result = 0;
+            Node<(int, int)> list = head;
+
+            while (list != null)
+            {
+                result += list.GetValue().Item1 * Math.Pow(x, list.GetValue().Item2);
+            }
+            return result;
+        }
+
         public override string ToString()
         {
             string st = "";
+            //first element
+            if (head.GetValue().Item1 < 0)
+                st += "- ";
+            st += Math.Abs(head.GetValue().Item1) + "*X^" + head.GetValue().Item2;
+            
             Node<(int, int)> lst = head;
             while (lst != null)
             {
-
+                if (head.GetValue().Item1 > 0)
+                    st += "+ ";
+                st += head.GetValue().Item1 + "*X^" + head.GetValue().Item2;
             }
             return st;
         }

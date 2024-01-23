@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{12E98470-D2C1-46A8-8788-2BB7332ACCE2}</ProjectGuid>
+    <ProjectGuid>{1B99D140-31F9-4799-8708-C007795906DE}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Nodes</RootNamespace>
-    <AssemblyName>Nodes</AssemblyName>
+    <RootNamespace>helpFriends</RootNamespace>
+    <AssemblyName>helpFriends</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -43,12 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Card.cs" />
-    <Compile Include="BInNode.cs" />
-    <Compile Include="BinNodeUtils.cs" />
-    <Compile Include="Poly.cs" />
-    <Compile Include="NodeUtils.cs" />
-    <Compile Include="Node.cs" />
+    <Compile Include="Alona.cs" />
+    <Compile Include="ItayBar.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
