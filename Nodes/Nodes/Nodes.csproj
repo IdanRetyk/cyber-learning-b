@@ -46,6 +46,10 @@
     <Compile Include="Card.cs" />
     <Compile Include="BInNode.cs" />
     <Compile Include="BinNodeUtils.cs" />
+    <Compile Include="StackUtils.cs" />
+    <Compile Include="Stack.cs" />
+    <Compile Include="QueueUtils.cs" />
+    <Compile Include="Queue.cs" />
     <Compile Include="Poly.cs" />
     <Compile Include="NodeUtils.cs" />
     <Compile Include="Node.cs" />
