@@ -38,7 +38,7 @@ namespace Nodes
         {
             T returnMe = first.GetValue();
             first = first.GetNext();
-            return this.Head();
+            return returnMe;
         }
 
         public T Head()
@@ -48,6 +48,7 @@ namespace Nodes
 
         public override string ToString()
         {
+            Node<T> backupFirst = first;
             if (first == null)
                 return "queue is empty";
             string msg = "[";
@@ -57,6 +58,7 @@ namespace Nodes
                 first = first.GetNext();
             }
             msg += $"{first.GetValue()}]";
+            first = backupFirst;
             return msg;
         }
     }

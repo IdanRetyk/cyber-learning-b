@@ -289,18 +289,17 @@ namespace Nodes
 
         static void Main(string[] args)
         {
-            Queue<int> myQ = new Queue<int>();
-            Console.WriteLine(myQ);
-            Console.WriteLine(myQ.IsEmpty());
-            myQ.Insert(50);
-            Console.WriteLine(myQ.IsEmpty());
-            myQ.Insert(2);
-            Console.WriteLine(myQ.Head());
-            myQ.Insert(1);
-            Console.WriteLine(myQ);
-            int num = myQ.Remove();
-            Console.WriteLine("num = " + num);
-            Console.WriteLine(myQ);
+            int[] arr1 = { 1,2,4,7,8,-3,1 };
+            int[] arr2 = {-8,-8};
+
+            Queue<int> Q1 = QueueUtils.CreateQueueFromArray(arr1);
+            Queue<int> Q2 = QueueUtils.CreateQueueFromArray(arr2);
+
+            Console.WriteLine(Q1);
+            Console.WriteLine(Q2);
+
+            QueueUtils.Sort(Q1);
+            Console.WriteLine(Q1);
 
             Console.ReadKey();
         }

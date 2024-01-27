@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace Nodes
 {
@@ -7,34 +8,122 @@ namespace Nodes
         public static Queue<T> CreateQueueFromArray<T>(T[] arr)
         {
             Queue<T> s = new Queue<T>();
+            for (int i = 0; i < arr.Length; i++)
+            {
+                s.Insert(arr[i]);
+            }
             return s;
         }
         public static void SpilledOn<T>(Queue<T> dest, Queue<T> src)
         {
+            while (!src.IsEmpty())
+            {
+                dest.Insert(src.Remove());
+            }
         }
 
         public static Queue<T> Clone<T>(Queue<T> s)
         {
-            Queue<T> t = new Queue<T>();
+            Queue<T> tmp = new Queue<T>();
             Queue<T> s2 = new Queue<T>();
+
+            SpilledOn(tmp,s);
+            while (!tmp.IsEmpty())
+            {
+                T temp = tmp.Remove();
+                s.Insert(temp);
+                s2.Insert(temp);
+            }
 
             return s2;
         }
         public static int GetSize<T>(Queue<T> q)
         {
             int count = 0;
-
+            Queue<T> backup = Clone(q);
+            while (!backup.IsEmpty())
+            {
+                backup.Remove();
+                count++;
+            }
+            q = backup;
             return count;
         }
-        public static void InsertAtPos<T>(Queue<T> q, T e, int n)
+        public static int Sum(Queue<int> q)
         {
+            int sum = 0;
+            Queue<int> backup = Clone(q);
+            while (!backup.IsEmpty())
+            {
+                sum+= backup.Remove(); 
+            }
+            return sum;
+
         }
         public static bool IsExist<T>(Queue<T> q, T e)
         {
-            return false;
+            bool IsExist = false;
+            Queue<T> backup = Clone(q);
+            while (!backup.IsEmpty() && !IsExist)
+            {
+                if (backup.Remove().Equals(e))
+                    IsExist = true;
+            }
+            return IsExist;
         }
         public static void Sort(Queue<int> q)
         {
+            Queue<int> q2 = new Queue<int>();
+            int len = GetSize(q);
+            SpilledOn(q2, q); //q is now epmty
+            for (int i = 0; i < len; i++)
+            {
+                q.Insert(RemoveMin(q2));
+            }
+        }
+
+        public static int RemoveMin(Queue<int> q1)
+        {
+            Queue<int> q2 = new Queue<int>();
+            Queue<int> q3 = new Queue<int>();
+            SpilledOn(q2, q1);
+            int min = int.MaxValue;
+            int num;
+            //find min value. at the end q1 is still emtpy
+            while (!q2.IsEmpty())
+            {
+                num = q2.Remove();
+                if (num < min)
+                {
+                    min = num;
+                }
+                q3.Insert(num);
+            }
+
+            //restore q1 without min value
+            bool found = false;
+            SpilledOn(q2, q3);
+            while (!q2.IsEmpty())
+            {
+                num = q2.Remove();
+                if (num == min)
+                {
+                    if (found)
+                        q1.Insert(num);
+                    else
+                        found = true;
+                }
+                else
+                {
+                    q1.Insert(num);
+                }
+                
+
+                
+                
+            }
+
+            return min;
         }
     }
 }
