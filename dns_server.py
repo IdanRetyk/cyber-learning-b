@@ -3,12 +3,14 @@ import socket
 DNS_SERVER_IP = "0.0.0.0"
 DNS_SERVER_PORT = 53
 DEAFALT_BUFFER_SIZE = 1024
-
+cont = True
 
 def dns_handler(data,addr,sock):
-    msg = data + b'212.123.70.40'
-    sock.sendto(msg,addr)
-    print("sent response to " + str(addr))
+    if b"google" in data :
+        #  -----id---------rest of header ---------------------------query block ------response header------------------------------   ip of gvahim
+        msg = data[:2] + b'\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00' + data[12:] + b'\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\x4f\x00\x04\xd4\x8f\x46\x28'
+        sock.sendto(msg,addr)
+        print(f"sent {msg} to " + str(addr))
 
 
 def dns_udp_server(ip, port):
