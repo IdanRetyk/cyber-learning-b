@@ -281,16 +281,39 @@ namespace Nodes
         }
 
 
-        
+
+
+        /// -+====================+-
+        ///      2/4/2024 hw 
+        ///      bagurt queue
+        ///
+        /// -+====================+-
 
 
 
+
+        public static bool IsIdentical<T>(Queue<T> q1, Queue<T> q2)
+        {
+            if (QueueUtils.GetSize(q1) != QueueUtils.GetSize(q2))
+                return false;
+
+            Queue<T> new1 = QueueUtils.Clone(q1);
+            Queue<T> new2 = QueueUtils.Clone(q2);
+
+
+            while (!new1.IsEmpty())
+            {
+                if (!new1.Remove().Equals(new2.Remove()))
+                    return false;
+            }
+            return true;
+        }
 
 
         static void Main(string[] args)
         {
-            int[] arr1 = { 1,2,4,7,8,-3,1 };
-            int[] arr2 = {-8,-8};
+            int[] arr1 = { 1,2,4,1 };
+            int[] arr2 = {1,2,4,1};
 
             Queue<int> Q1 = QueueUtils.CreateQueueFromArray(arr1);
             Queue<int> Q2 = QueueUtils.CreateQueueFromArray(arr2);
@@ -298,8 +321,12 @@ namespace Nodes
             Console.WriteLine(Q1);
             Console.WriteLine(Q2);
 
-            QueueUtils.Sort(Q1);
+            Console.WriteLine("is identical - " + IsIdentical(Q1, Q2));
+
             Console.WriteLine(Q1);
+            Console.WriteLine(Q2);
+
+
 
             Console.ReadKey();
         }
