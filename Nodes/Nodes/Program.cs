@@ -310,22 +310,41 @@ namespace Nodes
         }
 
 
+
+
+
+
+        public static int BigNumber(Node<Queue<int>> lst)
+        {
+            int max = int.MinValue;
+            while (lst != null)
+            {
+                max = Math.Max(max, QueueUtils.ToNumber(lst.GetValue()));
+            }
+            return max;
+        }
+
+
+        
+
+
+
+        
+
+
+
         static void Main(string[] args)
         {
-            int[] arr1 = { 1,2,4,1 };
+            int[] arr1 = { 1,1,6,6,4,4,1,1 };
             int[] arr2 = {1,2,4,1};
 
             Queue<int> Q1 = QueueUtils.CreateQueueFromArray(arr1);
             Queue<int> Q2 = QueueUtils.CreateQueueFromArray(arr2);
 
             Console.WriteLine(Q1);
+
+            Q2 = QueueUtils.DoubleToPalindromQ(Q1);
             Console.WriteLine(Q2);
-
-            Console.WriteLine("is identical - " + IsIdentical(Q1, Q2));
-
-            Console.WriteLine(Q1);
-            Console.WriteLine(Q2);
-
 
 
             Console.ReadKey();

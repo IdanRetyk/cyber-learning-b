@@ -117,14 +117,79 @@ namespace Nodes
                 {
                     q1.Insert(num);
                 }
-                
-
-                
-                
             }
 
             return min;
         }
+
+
+
+
+
+        public static Queue<T> DoubleToPalindromS<T>(Queue<T> qd)
+        {
+            Stack<T> myStack =new Stack<T>();
+            while (!qd.IsEmpty())
+            {
+                qd.Remove();
+                T num = qd.Remove();
+                myStack.Push(num);
+            }
+
+            Stack<T> newStack = new Stack<T>();
+
+            while (!myStack.IsEmpty())
+            {
+                T num = myStack.Pop();
+                newStack.Push(num);
+                qd.Insert(num);
+            }
+
+            while (!newStack.IsEmpty())
+            {
+                qd.Insert(newStack.Pop());
+            }
+            return qd;
+        }
+
+        public static Queue<T> DoubleToPalindromQ<T>(Queue<T> qd)
+        {
+
+            Queue<T> first = Recr(qd);
+            Queue<T> last = new Queue<T>();
+            SpilledOn(first, Recr(qd));
+            return first;
+        }
+
+        private static Queue<T> Recr<T>(Queue<T> q)
+        {
+            if (q.IsEmpty())
+                return null;
+            Queue<T> newQ = Clone(q);
+            Queue<T> final = Recr(q);
+            final.Insert(newQ.Remove());
+            return final;
+        }
+
+
+
+        public static int ToNumber(Queue<int> q)
+        {
+            int num = 0;
+
+            num = q.Remove();
+            while(!q.IsEmpty())
+            {
+                num *= 10;
+                num += q.Remove();
+            }
+            return num;
+        }
+
+
+
+
+
     }
 }
 
