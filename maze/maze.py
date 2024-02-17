@@ -4,7 +4,7 @@ from PIL import Image
 def load_img_as_array():
     #returns the image as a 2d array of the pixels
     
-    img = Image.open(r"C:\cyber-learning-b\maze\maze.png")
+    img = Image.open("/Users/Idan/cyber-learning-b/maze/maze.png")
     img = img.convert("RGB")
     pixels = img.getdata()
     
@@ -25,39 +25,66 @@ def load_img_as_array():
 all_to_die = False
 
 
-def deep_first_search(img,link,h,w,visited,direction):
-    if (h > 638 or h < 0 or w > 638 or w < 0 ):
-        return
+def valid_pixel(x,y,visited,img): #this function will check if the recurstion needs to end
+
+    if (x > 638 or x < 0 or y > 638 or y < 0 ):
+        print(f"out of range {x},{y} ")
+        return False
     
-    if (img[h][w] == 0):
-        
-        return
+    if (visited[y][x]):
+        print(f"visited {x},{y} ")
+        return False
     
-    if (visited[h][w]):
-        return
+    if (img[y][x] == 0):
+        print(f"black pixel {x},{y} ")
+        return False
     
-    if (h == 0 and w==638):
+    return True
+
+
+def deep_first_search(img,link,x,y,visited,direction):
+    
+    
+    
+    
+    if (x == 0 and y == 638):
         draw_solution(link)
         return
     
-    link.append((h,w))
-    visited[h][w]=True
-    print(visited[h][w])
-    if (direction != "down") :
-        deep_first_search(img,link,h - 1,w,visited,"up")
-    if (direction != "up"):
-        deep_first_search(img,link,h - 1,w,visited,"down")
-    if (direction != "left"):
-        deep_first_search(img,link,h,w-1,visited,"right")
-    if (direction != "right"):
-        deep_first_search(img,link,h,w+1,visited,"left")
+    link.append((x,y))
+    
+    visited[y][x] = True
+    try:
+        if (direction != "down") :
+            print("moved up ")
+            if (valid_pixel(x,y + 1,visited,img)):
+                deep_first_search(img,link,x,y + 1,visited,"up")
+            
+        if (direction != "up"):
+            print("moved down")
+            if (valid_pixel(x,y - 1,visited,img)):
+                deep_first_search(img,link,x,y - 1,visited,"down")
+            
+        if (direction != "left"):
+            print("moved right")
+            if (valid_pixel(x - 1,y,visited,img)):
+                deep_first_search(img,link,x - 1,y,visited,"right")
+            
+        if (direction != "right"):
+            print("moved left")
+            if (valid_pixel(x + 1,y,visited,img)):
+                deep_first_search(img,link,x + 1,y,visited,"left")
+    
+    except:
+        print("Error")
+
     
     
         
 
-def draw_solution(solution):
-    print("solutoes")
-    print(solution)
+def draw_solution(solution = [],visited = []):
+    with open("maze.txt", 'w') as file:
+        file.write(str(visited))
 
 
 def main():
@@ -65,7 +92,6 @@ def main():
     visited = [[False for x in range(639)] for y in range(639)] 
     link = []
     deep_first_search(img_arr,link,638,0,visited,"down")
-    print("this is"  + str(visited[638][0]))
 
 
 
