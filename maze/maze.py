@@ -1,100 +1,160 @@
 from PIL import Image
+from collections import deque
 
-
-def load_img_as_array():
-    #returns the image as a 2d array of the pixels
+class Point:
+    def __init__(self,x,y) :
+        self.x = x
+        self.y = y
+        
+    def GetDown(self):
+        #print("Moved Down")
+        return Point(self.x,self.y + 1)
+    def GetUp(self):
+        #print("Moved Up")
+        return Point(self.x,self.y - 1)
+    def GetLeft(self):
+        #print("Moved Left")
+        return Point(self.x - 1,self.y)
+    def GetRight(self):
+        #print("moved right")
+        return Point(self.x + 1, self.y)
     
-    img = Image.open("/Users/Idan/cyber-learning-b/maze/maze.png")
-    img = img.convert("RGB")
-    pixels = img.getdata()
-    
-    h,w = 639,639
-    mat = [[0 for x in range(w)] for y in range(h)] 
-    
-    for y in range(639):
-        for x in range(639):
-            pixel = pixels[y * 639 + x] 
-            if(pixel[0] == 0): #black
-                mat[x][y] = 0
+    def GetDirection(prev,curr):
+        if (prev.x == curr.x):
+            if (prev.y + 1 == curr.y):
+                return "Down"
             else:
-                mat[x][y] = 255
-
-    return mat
-                
-
-all_to_die = False
-
-
-def valid_pixel(x,y,visited,img): #this function will check if the recurstion needs to end
-
-    if (x > 638 or x < 0 or y > 638 or y < 0 ):
-        print(f"out of range {x},{y} ")
+                return "Up"
+        else:
+            if (prev.x + 1 == curr.x):
+                return "Right"
+            else:
+                return "Left"
+    
+    def __eq__(self, other):
+        if isinstance(other, Point):
+            return self.x == other.x and self.y == other.y
         return False
     
-    if (visited[y][x]):
-        print(f"visited {x},{y} ")
-        return False
+    def __hash__(self):
+        return hash(self.x + self.y)
+
+    def __repr__(self):
+        return f"{self.x},{self.y}"
     
-    if (img[y][x] == 0):
-        print(f"black pixel {x},{y} ")
-        return False
     
-    return True
+    
+    def IsValid(self):
+        global img_arr,visited
+        if self.x > 640 or self.x < 0 or self.y > 640 or self.y < 0:
+            return False
+
+        if visited[self.x][self.y] or img_arr[self.y][self.x][0] < 10:
+            return False
+
+        return True
+        
+def load_img_as_array(image_path = "/Users/Idan/cyber-learning-b/maze/maze.png"):
+    img = Image.open(image_path)
+    img = img.convert('RGB')
+    width, height = img.size
+    pixels = img.load()
+    img_arr = []
+    for y in range(height):
+        row = []
+        for x in range(width):
+            pixel_value = pixels[x, y]
+            row.append(pixel_value)
+        img_arr.append(row)
+    return img_arr
 
 
-def deep_first_search(img,link,x,y,visited,direction):
-    
-    
-    
-    
-    if (x == 0 and y == 638):
-        draw_solution(link)
-        return
-    
-    link.append((x,y))
-    
-    visited[y][x] = True
-    try:
-        if (direction != "down") :
-            print("moved up ")
-            if (valid_pixel(x,y + 1,visited,img)):
-                deep_first_search(img,link,x,y + 1,visited,"up")
-            
-        if (direction != "up"):
-            print("moved down")
-            if (valid_pixel(x,y - 1,visited,img)):
-                deep_first_search(img,link,x,y - 1,visited,"down")
-            
-        if (direction != "left"):
-            print("moved right")
-            if (valid_pixel(x - 1,y,visited,img)):
-                deep_first_search(img,link,x - 1,y,visited,"right")
-            
-        if (direction != "right"):
-            print("moved left")
-            if (valid_pixel(x + 1,y,visited,img)):
-                deep_first_search(img,link,x + 1,y,visited,"left")
-    
-    except:
-        print("Error")
 
-    
-    
+def deep_first_search(link,stack):
+    # Performs a depth-first search
+    cont = True
+    count = 0
+    while(cont):
+        count += 1
+        prev,curr = stack.pop()
+        if curr.IsValid():
+            if curr.x == 1 and curr.y == 640:
+                cont = False
+                draw_solution()
+                break
+            
+            link[prev] = curr
+            direction = Point.GetDirection(prev,curr)
+            if (direction != "Right"):
+                stack.append((curr, curr.GetLeft()))
+            if (direction != "Left"):
+                stack.append((curr, curr.GetRight()))
+            if (direction != "Up"):
+                stack.append((curr, curr.GetDown()))
+            if (direction != "Down"):
+                stack.append((curr, curr.GetUp()))
+        
+        if (count == 2000): #for some reason if run further it doesn't end
+            draw_solution(link)
+            break
+            print(count)
+        
         
 
-def draw_solution(solution = [],visited = []):
-    with open("maze.txt", 'w') as file:
-        file.write(str(visited))
+    
+    
 
+def draw_solution(link):
+    # Draws the solution path
+    img = Image.new("RGB", (641, 641))
+    pixels = img.load()
+    # for i in range(img.size[0]):
+    #     for j in range(img.size[1]):
+    #         if img_arr[i][j] == 0:
+    #             pixels[i, j] = 0
+    #         elif visited[i][j]:
+    #             pixels[i, j] = 255
+                
+    for i in range( img.size[0]):
+        for j in range(img.size[1]):
+            if(img_arr[j][i][0] < 10):
+                pixels[i, j] = 0
+            else:
+                pixels[i, j] = (255,255,255)           
+    key = Point(639,0)
+    while (key in link.keys()):
+        
+        value = link[key]
+        pixels[key.x,key.y] = (255,0,0)
+        key = value
+        #print(key)
+    #print(link)
+    img.save("path.png")
+    #img.show()
 
 def main():
+    global img_arr, visited, path
+    
     img_arr = load_img_as_array()
-    visited = [[False for x in range(639)] for y in range(639)] 
-    link = []
-    deep_first_search(img_arr,link,638,0,visited,"down")
 
+    img = Image.new("RGB", (641, 641))
+    pixels = img.load()
+    
+    
+    visited = [[False for _ in range(641)] for _ in range(641)]
+    link = {Point(-1,-1):Point(639,0)}
+    
+    stack = deque()
+    
+    start_point = Point(639,0)
+    
+    stack.append((start_point,start_point.GetDown()))
+    
+    visited[639][0] = True
+    nlink = deep_first_search(link,stack)
+    
 
-
+    
 
 if __name__ == "__main__":
     main()

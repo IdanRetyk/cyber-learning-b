@@ -1,5 +1,10 @@
-import pyautogui
-from datetime import date
+import time
 
+start = time.time()
 
-pyautogui.press(ent)
+n = 100000000
+for i in range(n):
+    i += 1
+
+end = time.time()
+print(f"time = {end - start}, {i}")
