@@ -1,5 +1,10 @@
 from PIL import Image
 from collections import deque
+import time,random
+
+
+PATH = r"/Users/Idan/cyber-learning-b/maze"
+COLOR = tuple([random.randint(0,255) for _ in range(3)]) #random color
 
 class Point:
     def __init__(self,x,y) :
@@ -7,16 +12,12 @@ class Point:
         self.y = y
         
     def GetDown(self):
-        #print("Moved Down")
         return Point(self.x,self.y + 1)
     def GetUp(self):
-        #print("Moved Up")
         return Point(self.x,self.y - 1)
     def GetLeft(self):
-        #print("Moved Left")
         return Point(self.x - 1,self.y)
     def GetRight(self):
-        #print("moved right")
         return Point(self.x + 1, self.y)
     
     def GetDirection(prev,curr):
@@ -53,10 +54,13 @@ class Point:
             return False
 
         return True
-        
-def load_img_as_array(image_path = "/Users/Idan/cyber-learning-b/maze/maze.png"):
-    img = Image.open(image_path)
-    img = img.convert('RGB')
+
+
+
+# end of class
+
+def load_img_as_array(image_path = PATH):
+    img = Image.open(rf"{image_path}/maze.png").convert("RGB")
     width, height = img.size
     pixels = img.load()
     img_arr = []
@@ -73,72 +77,60 @@ def load_img_as_array(image_path = "/Users/Idan/cyber-learning-b/maze/maze.png")
 def deep_first_search(link,stack):
     # Performs a depth-first search
     cont = True
-    count = 0
     while(cont):
-        count += 1
         prev,curr = stack.pop()
         if curr.IsValid():
             if curr.x == 1 and curr.y == 640:
                 cont = False
-                draw_solution()
+                draw_solution(link)
                 break
             
             link[prev] = curr
             direction = Point.GetDirection(prev,curr)
-            if (direction != "Right"):
-                stack.append((curr, curr.GetLeft()))
             if (direction != "Left"):
                 stack.append((curr, curr.GetRight()))
-            if (direction != "Up"):
-                stack.append((curr, curr.GetDown()))
             if (direction != "Down"):
                 stack.append((curr, curr.GetUp()))
-        
-        if (count == 2000): #for some reason if run further it doesn't end
-            draw_solution(link)
-            break
-            print(count)
+            if (direction != "Right"):
+                stack.append((curr, curr.GetLeft()))
+            if (direction != "Up"):
+                stack.append((curr, curr.GetDown()))
+            
         
         
 
-    
     
 
 def draw_solution(link):
     # Draws the solution path
     img = Image.new("RGB", (641, 641))
     pixels = img.load()
-    # for i in range(img.size[0]):
-    #     for j in range(img.size[1]):
-    #         if img_arr[i][j] == 0:
-    #             pixels[i, j] = 0
-    #         elif visited[i][j]:
-    #             pixels[i, j] = 255
-                
+
+    #replicates the original maze            
     for i in range( img.size[0]):
         for j in range(img.size[1]):
-            if(img_arr[j][i][0] < 10):
+            if(img_arr[j][i][0] == 0):
                 pixels[i, j] = 0
             else:
-                pixels[i, j] = (255,255,255)           
+                pixels[i, j] = (255,255,255)  
+    
+             
     key = Point(639,0)
+
+    #draws path 
     while (key in link.keys()):
         
         value = link[key]
-        pixels[key.x,key.y] = (255,0,0)
+        pixels[key.x,key.y] = COLOR
         key = value
-        #print(key)
-    #print(link)
-    img.save("path.png")
-    #img.show()
+
+    img.save(rf"{PATH}/solved.png")
+
 
 def main():
-    global img_arr, visited, path
+    global img_arr, visited
     
     img_arr = load_img_as_array()
-
-    img = Image.new("RGB", (641, 641))
-    pixels = img.load()
     
     
     visited = [[False for _ in range(641)] for _ in range(641)]
@@ -151,7 +143,14 @@ def main():
     stack.append((start_point,start_point.GetDown()))
     
     visited[639][0] = True
-    nlink = deep_first_search(link,stack)
+
+    start = time.time()
+    deep_first_search(link,stack)
+    end = time.time()
+    st = ""
+    print(f"{st:-^30}")
+    print(f"finished in {end - start:.4} seconds")
+    print(f"{st:-^30}")
     
 
     
