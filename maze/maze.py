@@ -96,6 +96,7 @@ def deep_first_search(link,stack):
             if (direction != "Up"):
                 stack.append((curr, curr.GetDown()))
             
+            
         
         
 
