@@ -218,8 +218,7 @@ def main(ip):
         print(f'Error while trying to connect.  Check ip or port -- {ip}:{port}')
 
     while connected:
-        from_user = menu()
-        to_send = protocol_build_request(from_user)
+        to_send = GUI().show_menu()
         if to_send =='':
             print("Selection error try again")
             continue
@@ -233,12 +232,9 @@ def main(ip):
             
             
             
-            handle_reply(byte_data)
+            print(byte_data.decode())
 
-            if from_user == '7':
-                print('Will exit ...')
-                connected = False
-                break
+            
         except socket.error as err:
             print(f'Got socket error: {err}')
             break
