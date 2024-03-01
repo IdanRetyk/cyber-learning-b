@@ -24,7 +24,7 @@ def send_data(sock, tid, bdata):
     E.g., from 'abcd' will send b'00000004~abcd'.
     Return: void
     """
-    bytearray_data = str(len(bdata)).zfill(8).encode() + b'~' + bdata
+    bytearray_data = (str(len(bdata)).zfill(8) + '~' + bdata).encode()
     sock.send(bytearray_data)
     logtcp('sent', tid, bytearray_data)
     print("")
@@ -53,8 +53,9 @@ def dump_users(data) -> None:
 
 def handle_request(data):
     finish = False
-    fields = data.split('~')
+    fields = data.split(b'~')
     command = fields[0]
+    to_send = b''
     if command == b'sign_in':
         to_send = USERS.check_sign_in(fields[1], fields[2])
     elif command == b'sign_up':
@@ -74,7 +75,7 @@ def handle_client(sock, tid, addr):
     :return: void
     """
     global all_to_die
-
+    all_to_die = False
     finish = False
     print(f'New Client number {tid} from {addr}')
     while not finish:

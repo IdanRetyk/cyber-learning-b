@@ -6,88 +6,104 @@ import socket,traceback
 
 class GUI():
     def send_sign_in(self):
-        self.to_send = f"in~{self.username}~{self.password}"
+        self.to_send = f"sign_in~{self.username.get()}~{self.password.get()}"
+        self.rootSI.destroy()
         self.root.destroy()
 
+
     def sign_in(self):
-        self.root = tk.Tk()
-        self.root.geometry("450x300")
-        self.root.title("sign in")
-        self.mainframe = tk.Frame(self.root,background="white")
-        self.mainframe.pack(fill="both",expand=True)
+        self.rootSI = tk.Tk()
+        self.rootSI.geometry("450x300")
+        self.rootSI.title("sign in")
+        self.mainframeSI = tk.Frame(self.rootSI,background="white")
+        self.mainframeSI.pack(fill="both",expand=True)
 
 
-        text = ttk.Label(self.mainframe,text="Email Address:",background="white",font=("Brass Mono",10),)
+        text = ttk.Label(self.mainframeSI,text="Email Address:",background="white",font=("Brass Mono",10),)
         text.grid(row=0,column=0)
 
-        self.username = ttk.Entry(self.mainframe)
+        self.username = ttk.Entry(self.mainframeSI)
         self.username.grid(row =1, column=0,sticky="NWES")
 
-        text = ttk.Label(self.mainframe,text="Password:",background="white",font=("Brass Mono",10),)
+        text = ttk.Label(self.mainframeSI,text="Password:",background="white",font=("Brass Mono",10),)
         text.grid(row=3,column=0)
         
-        self.password = ttk.Entry(self.mainframe,show='*')
+        self.password = ttk.Entry(self.mainframeSI,show='*')
         self.password.grid(row =4, column=0,sticky="NWES")
 
         
-        login = ttk.Button(self.mainframe,text="LOGIN",command=self.send_sign_in)
+        login = ttk.Button(self.mainframeSI,text="LOGIN",command=self.send_sign_in)
         login.grid(row=6,column=1)
 
-        self.root.mainloop()
+        self.rootIS.mainloop()
 
-    
+        self.root.destroy()
+
         return self.to_send
     
     def send_sign_up(self):
-        self.to_send = f"up~{self.username}~{self.password}"
+        self.to_send = f"sign_up~{self.username.get()}~{self.password.get()}"
+        self.rootSU.destroy()
         self.root.destroy()
+
     
     def sign_up(self):
-        self.root = tk.Tk()
-        self.root.geometry("450x300")
-        self.root.title("sign in")
-        self.mainframe = tk.Frame(self.root,background="white")
-        self.mainframe.pack(fill="both",expand=True)
+        self.rootSU = tk.Tk()
+        self.rootSU.geometry("450x300")
+        self.rootSU.title("sign in")
+        self.mainframeSU = tk.Frame(self.rootSU,background="white")
+        self.mainframeSU.pack(fill="both",expand=True)
 
         #email
-        text = ttk.Label(self.mainframe,text="Email Address:",background="white",font=("Brass Mono",10),)
+        text = ttk.Label(self.mainframeSU,text="Email Address:",background="white",font=("Brass Mono",10),)
         text.grid(row=0,column=0)
 
-        self.username = ttk.Entry(self.mainframe)
+        self.username = ttk.Entry(self.mainframeSU)
         self.username.grid(row =1, column=0,sticky="NWES")
 
         #ps
-        text = ttk.Label(self.mainframe,text="Password:",background="white",font=("Brass Mono",10),)
+        text = ttk.Label(self.mainframeSU,text="Password:",background="white",font=("Brass Mono",10),)
         text.grid(row=3,column=0)
         
-        self.password = ttk.Entry(self.mainframe,show='*')
+        self.password = ttk.Entry(self.mainframeSU,show='*')
         self.password.grid(row =4, column=0,sticky="NWES")
 
         #confrim ps
-        text = ttk.Label(self.mainframe,text="Confirm Password:",background="white",font=("Brass Mono",10),)
+        text = ttk.Label(self.mainframeSU,text="Confirm Password:",background="white",font=("Brass Mono",10),)
         text.grid(row=5,column=0)
         
-        self.password = ttk.Entry(self.mainframe,show='*')
-        self.password.grid(row =4, column=0,sticky="NWES")
+        self.Cpassword = ttk.Entry(self.mainframeSU,show='*')
+        self.Cpassword.grid(row =7, column=0,sticky="NWES")
         
-        createAcc = ttk.Button(self.mainframe,text="Create Account",command=self.check_login)
-        createAcc.grid(row=6,column=1)
+        createAcc = ttk.Button(self.mainframeSU,text="Create Account",command=self.send_sign_up)
+        createAcc.grid(row=8,column=1)
 
+        
+        
+        
         self.root.mainloop()
 
+        
 
-        return self.to_send
+        
     
     
 
     def show_menu(self):
         self.root = tk.Tk()
         self.root.geometry("450x300")
-        sign_in = ttk.Button(self.mainframe,text="I already have an account",command = self.sign_in())
-        sign_in.grid(row=2,column=3)
-        sign_up = ttk.Button(self.mainframe,text="Create new account",command=self.sign_up())
+        self.root.title("Choose your opntion")
+        self.mainframe = tk.Frame(self.root,background="white")
+        self.mainframe.pack(fill="both",expand=True)
+        self.to_send = ''
+        
+        sign_in = ttk.Button(self.mainframe,text="I already have an account",command = self.sign_in)
+        sign_in.grid(row=0,column=0)
+        sign_up = ttk.Button(self.mainframe,text="Create new account",command=self.sign_up)
         sign_up.grid(row=2,column=5)
         
+        self.root.mainloop()
+        return self.to_send
         
 
 
@@ -115,20 +131,6 @@ def send_data(sock, bdata):
     logtcp('sent', bytearray_data)
 
 
-def menu():
-    """
-    show client menu
-    return: string with selection
-    """
-    print('\n  1. take screenshot')
-    print('\n  2. send file')
-    print('\n  3. display directory')
-    print('\n  4. delete file ')
-    print('\n  5. copy file ')
-    print('\n  6. run executeable file')
-    print('\n  7. notify exit')
-    print('\n  (8. some invalid data for testing)')
-    return input(' which action do you want? (1-8) ' )
 
 
 def protocol_build_request(from_user):
@@ -219,20 +221,19 @@ def main(ip):
 
     while connected:
         to_send = GUI().show_menu()
+        print (f"{to_send =}")
         if to_send =='':
             print("Selection error try again")
             continue
         try :
             send_data(sock,to_send.encode())
-            byte_data = recive_by_size(sock)   
-            if byte_data == b'':
+            data = recive_by_size(sock)   
+            if data == '':
                 print ('Seems server disconnected abnormal')
                 break
            
             
-            
-            
-            print(byte_data.decode())
+            print(data)
 
             
         except socket.error as err:
