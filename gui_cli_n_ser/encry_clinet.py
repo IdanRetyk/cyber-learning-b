@@ -10,8 +10,7 @@ class GUI():
         self.rootSI.destroy()
         self.root.destroy()
 
-
-    def sign_in(self):
+    def sign_in(self, error = ""):
         self.rootSI = tk.Tk()
         self.rootSI.geometry("450x300")
         self.rootSI.title("sign in")
@@ -32,22 +31,26 @@ class GUI():
         self.password.grid(row =4, column=0,sticky="NWES")
 
         
+        error = ttk.Label(self.mainframeSI,text=error,background = "white",foreground = "red")
+        error.grid(row = 10,column=0)
+        
+        
+        
         login = ttk.Button(self.mainframeSI,text="LOGIN",command=self.send_sign_in)
         login.grid(row=6,column=1)
 
-        self.rootIS.mainloop()
+        self.rootSI.mainloop()
 
-        self.root.destroy()
-
+        
         return self.to_send
     
     def send_sign_up(self):
-        self.to_send = f"sign_up~{self.username.get()}~{self.password.get()}"
+        self.to_send = f"sign_up~{self.username.get()}~{self.password.get()}~{self.Cpassword.get()}"
         self.rootSU.destroy()
         self.root.destroy()
 
     
-    def sign_up(self):
+    def sign_up(self,error = ""):
         self.rootSU = tk.Tk()
         self.rootSU.geometry("450x300")
         self.rootSU.title("sign in")
@@ -78,15 +81,14 @@ class GUI():
         createAcc = ttk.Button(self.mainframeSU,text="Create Account",command=self.send_sign_up)
         createAcc.grid(row=8,column=1)
 
+        error = ttk.Label(self.mainframeSU,text=error,background = "white",foreground = "red")
+        error.grid(row = 10,column=0)
         
         
         
-        self.root.mainloop()
+        self.rootSU.mainloop()
 
         
-
-        
-    
     
 
     def show_menu(self):
@@ -165,10 +167,8 @@ def protocol_parse_reply(reply):
     parse the server reply and prepare it to user
     return: answer from server string
     """
-   
-    
-    
-    pass
+
+    return reply
 
 
 def handle_reply(reply): #reply is the message without the length field
@@ -184,8 +184,20 @@ def handle_reply(reply): #reply is the message without the length field
 
 
 
-
-
+def parse(data,gui):
+    error = data.split('~')[1]
+    to_send = ""
+    
+    if (error == "wrong password"):
+        to_send = gui.sign_in(error)
+    if (error == "Username not found"):
+        to_send = gui.sign_in(error)
+    if (error == "username already exists"):
+        to_send = gui.sign_up(error)
+    if (error == "passwords aren't identical"):
+        to_send = gui.sign_up(error)
+    
+    return to_send.encode()
 def recive_by_size(sock):
     
     size = ''
@@ -219,18 +231,21 @@ def main(ip):
     except:
         print(f'Error while trying to connect.  Check ip or port -- {ip}:{port}')
 
-    while connected:
-        to_send = GUI().show_menu()
-        print (f"{to_send =}")
+    if (connected):
+        gui = GUI()
+        to_send = gui.show_menu()
+        print (f"to send {to_send} ")
         if to_send =='':
             print("Selection error try again")
-            continue
+            
         try :
             send_data(sock,to_send.encode())
             data = recive_by_size(sock)   
             if data == '':
                 print ('Seems server disconnected abnormal')
-                break
+            while data.split('~')[0] == 'err':
+                send_data(sock,parse(data,gui))
+                data = recive_by_size(sock)   
            
             
             print(data)
@@ -238,11 +253,11 @@ def main(ip):
             
         except socket.error as err:
             print(f'Got socket error: {err}')
-            break
+            
         except Exception as err:
             print(f'General error: {err}')
             print(traceback.format_exc())
-            break
+            
     print ('Bye')
     sock.close()
 
