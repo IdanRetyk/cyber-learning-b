@@ -48,6 +48,7 @@ class GUI():
         self.to_send = f"sign_up~{self.username.get()}~{self.password.get()}~{self.Cpassword.get()}"
         self.rootSU.destroy()
         self.root.destroy()
+
     
     def sign_up(self,error = ""):
         self.rootSU = tk.Tk()
@@ -87,7 +88,7 @@ class GUI():
         
         self.rootSU.mainloop()
 
-        return self.to_send
+        
     
 
     def show_menu(self):
@@ -104,7 +105,6 @@ class GUI():
         sign_up.grid(row=2,column=5)
         
         self.root.mainloop()
-
         return self.to_send
         
 
