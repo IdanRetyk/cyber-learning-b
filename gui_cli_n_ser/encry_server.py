@@ -1,7 +1,7 @@
 import socket, threading, traceback,time
 
 from users import UsersDict
-
+from hashlib import sha256
 
 USERS = UsersDict()
 
@@ -38,7 +38,12 @@ def check_length(message):
     return b''
 
 
-
+def _hash(data):
+    """
+    Hash the data.
+    Return: string - hashed data
+    """
+    return sha256(data.encode()).hexdigest()
 
 
 def handle_request(data):
@@ -47,9 +52,9 @@ def handle_request(data):
     command = fields[0]
     to_send = b''
     if command == b'sign_in':
-        to_send = USERS.check_sign_in(fields[1].decode(), fields[2].decode())
+        to_send = USERS.check_sign_in(fields[1].decode(), _hash(fields[2].decode()))
     elif command == b'sign_up':
-        to_send = USERS.sign_up(fields[1].decode(), fields[2].decode(),fields[3].decode())
+        to_send = USERS.sign_up(fields[1].decode(), _hash(fields[2].decode()),_hash(fields[3].decode()))
     else:
         print("unknown command")
         finish = True
