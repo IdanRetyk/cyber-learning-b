@@ -1,4 +1,4 @@
-import socket, threading, traceback,time,pickle
+import socket, threading, traceback,time
 
 from users import UsersDict
 
@@ -38,16 +38,6 @@ def check_length(message):
     return b''
 
 
-def load_users() -> dict:
-    try:
-        with open('users.pkl', 'rb') as file:
-            return pickle.load(file)
-    except:
-        return {}
-
-
-def dump_users(data) -> None:
-    pickle.dump(data, open('users.pkl', 'wb'))
 
 
 
@@ -57,9 +47,9 @@ def handle_request(data):
     command = fields[0]
     to_send = b''
     if command == b'sign_in':
-        to_send = USERS.check_sign_in(fields[1], fields[2])
+        to_send = USERS.check_sign_in(fields[1].decode(), fields[2].decode())
     elif command == b'sign_up':
-        to_send = USERS.sign_up(fields[1], fields[2])
+        to_send = USERS.sign_up(fields[1].decode(), fields[2].decode(),fields[3].decode())
     else:
         print("unknown command")
         finish = True
@@ -106,7 +96,7 @@ def handle_client(sock, tid, addr):
             print(f'General Error %s exit client loop: {err}')
             print(traceback.format_exc())
             break
-
+    USERS.save_data()
     print(f'Client {tid} Exit')
     sock.close()
 
@@ -121,7 +111,7 @@ def main():
     3. wait for all threads
     4. every X clients limit will exit
     """
-    USERS = UsersDict(load_users())
+    USERS = UsersDict()
     
     threads = []
     srv_sock = socket.socket()

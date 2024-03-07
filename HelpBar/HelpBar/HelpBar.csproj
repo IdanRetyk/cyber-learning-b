@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{12E98470-D2C1-46A8-8788-2BB7332ACCE2}</ProjectGuid>
+    <ProjectGuid>{528900D3-09EE-4DF3-8816-7EC1265C611E}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Nodes</RootNamespace>
-    <AssemblyName>Nodes</AssemblyName>
+    <RootNamespace>HelpBar</RootNamespace>
+    <AssemblyName>HelpBar</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -43,17 +43,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Card.cs" />
-    <Compile Include="BInNode.cs" />
-    <Compile Include="BinNodeUtils.cs" />
-    <Compile Include="Class2.cs" />
-    <Compile Include="StackUtils.cs" />
-    <Compile Include="Stack.cs" />
-    <Compile Include="QueueUtils.cs" />
-    <Compile Include="Queue.cs" />
-    <Compile Include="Poly.cs" />
-    <Compile Include="NodeUtils.cs" />
-    <Compile Include="Node.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

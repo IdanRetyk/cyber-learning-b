@@ -1,0 +1,7 @@
+C:\cyber-learning-b\HelpBar\HelpBar\bin\Debug\HelpBar.exe.config
+C:\cyber-learning-b\HelpBar\HelpBar\bin\Debug\HelpBar.exe
+C:\cyber-learning-b\HelpBar\HelpBar\bin\Debug\HelpBar.pdb
+C:\cyber-learning-b\HelpBar\HelpBar\obj\Debug\HelpBar.csproj.AssemblyReference.cache
+C:\cyber-learning-b\HelpBar\HelpBar\obj\Debug\HelpBar.csproj.CoreCompileInputs.cache
+C:\cyber-learning-b\HelpBar\HelpBar\obj\Debug\HelpBar.exe
+C:\cyber-learning-b\HelpBar\HelpBar\obj\Debug\HelpBar.pdb

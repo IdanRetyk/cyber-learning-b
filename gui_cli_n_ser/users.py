@@ -1,11 +1,11 @@
-import pickle,threading
+import json,threading,os
 
 class UsersDict:
     users: dict = {}
     lock = threading.Lock()
     
-    def __init__(self,data: dict = {}) -> None:
-        self.users = data
+    def __init__(self) -> None:
+        self.users = load_users()
     
     def does_user_exists(self,user: str) -> bool:
         return user in self.users.keys()
@@ -16,31 +16,37 @@ class UsersDict:
                 if self.users[username] == password:
                     to_send = "ack"
                 else:
-                    to_send = "wrong password"
+                    to_send = "err~wrong password"
             else:
-                to_send = "Username not found"
+                to_send = "err~Username not found"
         return to_send
 
-    def sign_up(self,username, password) -> str:
+    def sign_up(self,username, password, cpassword) -> str:
         with self.lock:
             if self.does_user_exists(username):
-                to_send = "username already exists"
+                to_send = "err~username already exists"
+            elif password != cpassword:
+                to_send = "err~passwords aren't identical"
             else:
                 self.users[username] = password
                 to_send = "ack"
         return to_send
 
     def save_data(self):
-        pickle.dump(self.users, open('users.pkl', 'wb'))
+        
+        json.dump(self.users, open('users.json', 'w'))
 
+
+
+    def clear(self):
+        os.remove(r"w:\RETyk\gui_cli_n_ser\users.json")
+    
 
 def load_users() -> dict:
     try:
-        with open('users.pkl', 'rb') as file:
-            return pickle.load(file)
+        with open('users.json', 'r') as file:
+            return json.load(file)
     except:
         return {}
 
 
-def dump_users(data) -> None:
-    pickle.dump(data, open('users.pkl', 'wb'))
