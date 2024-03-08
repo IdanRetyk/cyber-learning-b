@@ -89,6 +89,8 @@ class GUI():
         self.rootSU.mainloop()
 
         
+        return self.to_send
+        
     
 
     def show_menu(self):
