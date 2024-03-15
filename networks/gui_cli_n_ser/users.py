@@ -1,4 +1,4 @@
-import json,threading,os
+import json,threading,os,re
 
 
 
@@ -16,13 +16,14 @@ class UsersDict:
     
     def check_sign_in(self,username, password,) -> str:
         with self.lock:
-            if self.does_user_exists(username):
-                if self.users[username][0] == password:
-                    to_send = "ack"
-                else:
-                    to_send = "err~wrong password"
+            if not self.does_user_exists(username):
+                to_send = "err~2~Username not found"
+            elif not self.users[username][0] == password:
+                to_send = "err~2~wrong password"
+            # elif not is_valid(username):
+            #     to_send = "err~2~Please enter a valid email!"
             else:
-                to_send = "err~Username not found"
+                to_send = "ack"
         return to_send
 
     def get_salt(self,username) -> str:
@@ -36,9 +37,9 @@ class UsersDict:
             
             #check for errors
             if self.does_user_exists(username):
-                to_send = "err~username already exists"
+                to_send = "err~1~username already exists"
             elif password != cpassword:
-                to_send = "err~passwords aren't identical"
+                to_send = "err~1~passwords aren't identical"
             
             #actually sign up
             else:
@@ -64,6 +65,10 @@ def load_users() -> dict:
             return json.load(file)
     except:
         return {}
+
+
+def is_valid(email) -> bool:
+    return re.match(r"(a-zA-Z0-9._%+-]+@(a-zA-Z0-9._%+-])+(\.(a-zA-Z0-9._%+-]+)+$",email) is not None
     
     
 

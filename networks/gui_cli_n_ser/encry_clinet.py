@@ -186,20 +186,23 @@ def handle_reply(reply): #reply is the message without the length field
 
 
 
-def parse(data,gui):
-    error = data.split('~')[1]
+def parse(data,gui: GUI):
+    fields = data.split('~')
+   
     to_send = ""
     
-    if (error == "wrong password"):
-        to_send = gui.sign_in(error)
-    if (error == "Username not found"):
-        to_send = gui.sign_in(error)
-    if (error == "username already exists"):
-        to_send = gui.sign_up(error)
-    if (error == "passwords aren't identical"):
-        to_send = gui.sign_up(error)
+    if fields[0] == "err":
+        #handle wrong user input
+        error_msg = fields[2]
+        if fields[1] == "1":
+            #errors in sign up
+            to_send = gui.sign_up(error_msg)
+        elif fields[1] == "2":
+            #error in sign in
+            to_send = gui.sign_in(error_msg)
     
     return to_send.encode()
+
 def recive_by_size(sock):
     
     size = ''
