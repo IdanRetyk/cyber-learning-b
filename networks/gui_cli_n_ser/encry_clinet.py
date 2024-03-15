@@ -8,11 +8,14 @@ class GUI():
     def send_sign_in(self):
         self.to_send = f"sign_in~{self.username.get()}~{self.password.get()}"
         self.rootSI.destroy()
-        self.root.destroy()
+        try:
+            self.root.destroy()
+        except:
+            pass
 
     def sign_in(self, error = ""):
         self.rootSI = tk.Tk()
-        self.rootSI.geometry("450x300")
+        self.rootSI.geometry("450x300+500+400")
         self.rootSI.title("sign in")
         self.mainframeSI = tk.Frame(self.rootSI,background="white")
         self.mainframeSI.pack(fill="both",expand=True)
@@ -47,12 +50,15 @@ class GUI():
     def send_sign_up(self):
         self.to_send = f"sign_up~{self.username.get()}~{self.password.get()}~{self.Cpassword.get()}"
         self.rootSU.destroy()
-        self.root.destroy()
+        try:
+            self.root.destroy()
+        except:
+            pass
 
     
     def sign_up(self,error = ""):
         self.rootSU = tk.Tk()
-        self.rootSU.geometry("450x300")
+        self.rootSU.geometry("450x300+500+400")
         self.rootSU.title("sign in")
         self.mainframeSU = tk.Frame(self.rootSU,background="white")
         self.mainframeSU.pack(fill="both",expand=True)
@@ -95,7 +101,7 @@ class GUI():
 
     def show_menu(self):
         self.root = tk.Tk()
-        self.root.geometry("450x300")
+        self.root.geometry("450x300+500+400")
         self.root.title("Choose your opntion")
         self.mainframe = tk.Frame(self.root,background="white")
         self.mainframe.pack(fill="both",expand=True)
@@ -106,11 +112,29 @@ class GUI():
         sign_up = ttk.Button(self.mainframe,text="Create new account",command=self.sign_up)
         sign_up.grid(row=2,column=5)
         
+        
+        close = ttk.Button(self.mainframe,text="Close",command = lambda : self.root.destroy())
+        close.grid(row=0,column=6)
+        
         self.root.mainloop()
         return self.to_send
         
-
-
+    def ack_window(self):
+        ack_root = tk.Tk()
+        ack_root.geometry("250x80+400+300")
+        ack_root.title("Acknoledgment Window")
+        ack_mainframe = tk.Frame(ack_root,background="white")
+        ack_mainframe.pack(fill="both",expand=True)
+        ack = ttk.Label(ack_mainframe,text="Action was done succesfuly!",background="white",font=("Brass Mono",10),justify="center")
+        ack.grid(row=0,column=0)
+        
+        close = ttk.Button(ack_mainframe,text="Close",command = lambda : ack_root.destroy())
+        close.grid(row=1,column=0)
+        
+        ack_root.mainloop()
+        
+        
+        
 
 def logtcp(dir, byte_data):
     """
@@ -130,9 +154,12 @@ def send_data(sock, bdata):
     e.g. from 'abcd' will send  b'00000004~abcd'
     return: void
     """
-    bytearray_data = str(len(bdata)).zfill(8).encode() + b'~' + bdata
-    sock.send(bytearray_data)
-    logtcp('sent', bytearray_data)
+    if len(bdata) == 0:
+        sock.send(b'')
+    else:
+        bytearray_data = str(len(bdata)).zfill(8).encode() + b'~' + bdata
+        sock.send(bytearray_data)
+        logtcp('sent', bytearray_data)
 
 
 
@@ -186,21 +213,20 @@ def handle_reply(reply): #reply is the message without the length field
 
 
 
-def parse(data,gui: GUI):
+def parse_error(data,gui: GUI):
     fields = data.split('~')
    
     to_send = ""
-    
-    if fields[0] == "err":
-        #handle wrong user input
-        error_msg = fields[2]
-        if fields[1] == "1":
-            #errors in sign up
-            to_send = gui.sign_up(error_msg)
-        elif fields[1] == "2":
-            #error in sign in
-            to_send = gui.sign_in(error_msg)
-    
+
+    #handle wrong user input
+    error_msg = fields[2]
+    if fields[1] == "1":
+        #errors in sign up
+        to_send = gui.sign_up(error_msg)
+    elif fields[1] == "2":
+        #error in sign in
+        to_send = gui.sign_in(error_msg)
+
     return to_send.encode()
 
 def recive_by_size(sock):
@@ -248,8 +274,10 @@ def main(ip):
             data = recive_by_size(sock)   
             if data == '':
                 print ('Seems server disconnected abnormal')
+            if data.split('~')[0] == 'ack':
+                gui.ack_window()
             while data.split('~')[0] == 'err':
-                send_data(sock,parse(data,gui))
+                send_data(sock,parse_error(data,gui))
                 data = recive_by_size(sock)   
            
             
