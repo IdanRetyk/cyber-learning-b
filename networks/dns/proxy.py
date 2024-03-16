@@ -1,14 +1,27 @@
+# this is a dns proxy using the previously written dns server and clinet (nslookup)
+
+from dns_server import dns_udp_server
+
 from scapy.all import UDP,DNS,DNSQR,IP,sr1,DNSRR
 
-import re
+import re,socket
+
+DNS_SERVER_IP = "0.0.0.0"
+DNS_SERVER_PORT = 53
+
+
 
 
 def ns_look_up(ip):
     domain = ip
-
-
-    dns_query = IP(dst="8.8.8.8") / UDP(dport=53) / DNS(qdcount=1, rd=1,qd = 0)/DNSQR(qname=domain)
-    response = sr1(dns_query,verbose=0)
+    
+    c = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    
+    dns_query = IP(dst=DNS_SERVER_IP) / UDP(dport=53) / DNS(qdcount=1, rd=1,qd = 0)/DNSQR(qname=domain)
+    
+    c.sendto(dns_query,(DNS_SERVER_IP,DNS_SERVER_PORT))
+    
+    response = dns_udp_server(DNS_SERVER_IP,DNS_SERVER_PORT)
     handle(response,domain)
 
         
