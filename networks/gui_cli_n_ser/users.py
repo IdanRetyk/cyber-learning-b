@@ -20,8 +20,7 @@ class UsersDict:
                 to_send = "err~2~Username not found"
             elif not self.users[username][0] == password:
                 to_send = "err~2~wrong password"
-            # elif not is_valid(username):
-            #     to_send = "err~2~Please enter a valid email!"
+            
             else:
                 to_send = "ack"
         return to_send
@@ -30,7 +29,7 @@ class UsersDict:
         try:
             return self.users[username][1]
         except:
-            pass 
+            return "salt" #if user doesn't exist it doesn't matter what we return, when trying to log in it will fail anyway
     
     def sign_up(self,username, password, cpassword,salt) -> str:
         with self.lock:
@@ -40,6 +39,8 @@ class UsersDict:
                 to_send = "err~1~username already exists"
             elif password != cpassword:
                 to_send = "err~1~passwords aren't identical"
+            elif not is_valid(username):
+                to_send = "err~1~Please enter a valid email!"
             
             #actually sign up
             else:
@@ -68,7 +69,7 @@ def load_users() -> dict:
 
 
 def is_valid(email) -> bool:
-    return re.match(r"(a-zA-Z0-9._%+-]+@(a-zA-Z0-9._%+-])+(\.(a-zA-Z0-9._%+-]+)+$",email) is not None
+    return re.match(r"^[A-Za-z_0-9]+@[A-Za-z_0-9]+.[A-Za-z_0-9]+",email) is not None
     
     
 
