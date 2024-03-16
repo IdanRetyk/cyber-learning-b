@@ -1,10 +1,18 @@
 import tkinter as tk
 from tkinter import ttk
 
-import socket,traceback
+import socket,traceback,smtplib,ssl,random
 
+from email.message import EmailMessage
+
+
+SENDER_EMAIL = 'verify.idan.ipython@gmail.com'
+SENDER_PASSWORD = 'Python123!'
 
 class GUI():
+    
+
+    
     def send_sign_in(self):
         self.to_send = f"sign_in~{self.username.get()}~{self.password.get()}"
         self.rootSI.destroy()
@@ -54,7 +62,6 @@ class GUI():
             self.root.destroy()
         except:
             pass
-
     
     def sign_up(self,error = ""):
         self.rootSU = tk.Tk()
@@ -119,6 +126,9 @@ class GUI():
         self.root.mainloop()
         return self.to_send
         
+        
+        
+        
     def ack_window(self):
         ack_root = tk.Tk()
         ack_root.geometry("250x80+400+300")
@@ -134,7 +144,35 @@ class GUI():
         ack_root.mainloop()
         
         
+    
+    def ver_window(self,display_wrong = False):
+        ver_root = tk.Tk()
+        ver_root.geometry("250x80+500+400")
+        ver_root.title("Verification Window")
+        ver_mainframe = tk.Frame(ver_root,background="white")
+        ver_mainframe.pack(fill="both",expand=True)
+        ver = ttk.Label(ver_mainframe,text="Please enter the verification code sent to your email",background="white",font=("Brass Mono",10),justify="center")
+        ver.grid(row=0,column=0)
         
+        self.ver_code = ttk.Entry(ver_mainframe)
+        self.ver_code.grid(row = 1, column = 0,sticky="NWES")
+        
+        
+        if display_wrong:
+            wrong = ttk.Label(ver_mainframe,text="Wrong code, please try again",background="white",font=("Brass Mono",10),justify="center",foreground="red")
+            wrong.grid(row=3,column=0)
+        
+        close = ttk.Button(ver_mainframe,text="Done",command = lambda : ver_root.destroy())
+        close.grid(row=2,column=0)
+        
+        ver_root.mainloop()
+        
+        return self.ver_code.get()
+        
+   
+
+
+
 
 def logtcp(dir, byte_data):
     """
@@ -161,55 +199,6 @@ def send_data(sock, bdata):
         sock.send(bytearray_data)
         logtcp('sent', bytearray_data)
 
-
-
-
-def protocol_build_request(from_user):
-    """
-    build the request according to user selection and protocol
-    return: string - msg code
-    """
-    if from_user == '1':
-        return 'SCRN~' + input ('enter name the screen shot will be saved ')
-    elif from_user == '2':
-        return 'SNDF~' + input('enter file absolute or relative path ')
-    elif from_user == '3':
-        return 'DIRS~' + input('enter directory absolute or relative path ')
-    elif from_user == '4':
-        return 'DELF~' + input('enter file absolute or relative path ')
-    elif from_user == '5':
-        pathFrom = input('enter file current location path')
-        pathTo = input('enter file copy location path')
-        return 'COPF~' + pathFrom + '~' + pathTo 
-    elif from_user == '6':
-        return 'RUNF~' + input('enter file absolute or relatvie path ')
-    elif from_user == '7':
-        return 'EXIT'
-    elif from_user == '8':
-        return input("enter free text data to send> ")
-    else:
-        return ''
-
-
-def protocol_parse_reply(reply):
-    """
-    parse the server reply and prepare it to user
-    return: answer from server string
-    """
-
-    return reply
-
-
-def handle_reply(reply): #reply is the message without the length field
-    """
-    get the tcp upcoming message and show reply information
-    return: void
-    """
-    to_show = protocol_parse_reply(reply)
-    if to_show != '':
-        print('\n==========================================================')
-        print (f'  SERVER Reply: {to_show}   |')
-        print(  '==========================================================')
 
 
 
@@ -271,17 +260,28 @@ def main(ip):
             
         try :
             send_data(sock,to_send.encode())
-            data = recive_by_size(sock)   
+            data = recive_by_size(sock)
+            command = data.split('~')[0] 
             if data == '':
                 print ('Seems server disconnected abnormal')
-            if data.split('~')[0] == 'ack':
-                gui.ack_window()
-            while data.split('~')[0] == 'err':
+            
+
+            if command == 'code':
+                correct_code = data.split('~')[2]
+                code = gui.ver_window()
+                while(correct_code != code):
+                    code = gui.ver_window(True)
+                send_data(sock,f"code~{data.split('~')[1]}".encode())
+                                  
+                
+                
+            while command == 'err':
                 send_data(sock,parse_error(data,gui))
-                data = recive_by_size(sock)   
+                data = recive_by_size(sock)
+                command = data.split('~')[0] 
            
             
-            print(data)
+            print(data, type(data))
 
             
         except socket.error as err:
@@ -290,7 +290,7 @@ def main(ip):
         except Exception as err:
             print(f'General error: {err}')
             print(traceback.format_exc())
-            
+    gui.ack_window()
     print ('Bye')
     sock.close()
 

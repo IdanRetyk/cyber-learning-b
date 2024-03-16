@@ -1,10 +1,23 @@
 import socket, threading, traceback,time
 import os 
+import traceback,smtplib,ssl,random
+
+from email.message import EmailMessage
+
 from users import UsersDict
 from hashlib import sha256
 
+
+#fixed variables
+
 USERS = UsersDict()
+
 PEPPER = "neverhackme"
+
+SENDER_EMAIL = 'verify.idan.ipython@gmail.com'
+SENDER_PASSWORD = 'Python123!'
+
+
 
 def logtcp(dir, tid, byte_data):
     """
@@ -49,17 +62,46 @@ def _salt() -> str:
     return os.urandom(4).hex()
 
 
+def send_email_verification(email_reciver: str,code:str) -> str:
+        
+        #send user an email with a verification code and return the code
+
+        em = EmailMessage()
+        em['from'] = SENDER_EMAIL
+        em['to'] = email_reciver
+        em['subject'] = 'verification'
+
+
+        em.set_content(f'your verification code is '+ code)
+        context = ssl.create_default_context()
+
+        with smtplib.SMTP_SSL('smtp.gmail.com',465,context=context) as smtp:
+            smtp.login(SENDER_EMAIL,SENDER_PASSWORD)
+            smtp.sendmail(SENDER_EMAIL,email_reciver,em.as_string())
+            print('sent')
+            
+        return code   
+    
+    
+
 def handle_request(data):
     finish = False
-    fields = data.split(b'~')
+    fields: list[bytes] = data.split(b'~')
     command = fields[0]
     to_send = b''
     if command == b'sign_in':
         salt = USERS.get_salt(fields[1].decode())
         to_send = USERS.check_sign_in(fields[1].decode(), _hash(fields[2].decode() + salt + PEPPER))
     elif command == b'sign_up':
+        code = str(random.randint(0,9999)).zfill(4) #create a varification code
         salt = _salt() #create a new salt
-        to_send = USERS.sign_up(fields[1].decode(), _hash(fields[2].decode() + salt + PEPPER),_hash(fields[3].decode() + salt + PEPPER),salt)
+        to_send = USERS.sign_up(fields[1].decode(), _hash(fields[2].decode() + salt + PEPPER),_hash(fields[3].decode() + salt + PEPPER),salt,code)
+        #info is valid
+        if to_send == 'ack':
+            to_send = 'code~' + fields[1].decode() + '~' + code
+    elif command == b'ack':
+        to_send = USERS.ack_user(fields[1].decode())
+        
     else:
         print("unknown command")
         finish = True
