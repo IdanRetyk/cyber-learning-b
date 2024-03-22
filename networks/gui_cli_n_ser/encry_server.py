@@ -14,8 +14,9 @@ USERS = UsersDict()
 
 PEPPER = "neverhackme"
 
-SENDER_EMAIL = 'verify.idan.ipython@gmail.com'
-SENDER_PASSWORD = 'Python123!'
+SENDER_EMAIL = 'verify.idan.python@gmail.com'
+SENDER_PASSWORD = "heeu zvaf jjgp vjnv"
+
 
 
 
@@ -98,9 +99,11 @@ def handle_request(data):
         to_send = USERS.sign_up(fields[1].decode(), _hash(fields[2].decode() + salt + PEPPER),_hash(fields[3].decode() + salt + PEPPER),salt,code)
         #info is valid
         if to_send == 'ack':
+            send_email_verification(fields[1].decode(),code)
             to_send = 'code~' + fields[1].decode() + '~' + code
     elif command == b'ack':
         to_send = USERS.ack_user(fields[1].decode())
+    
         
     else:
         print("unknown command")

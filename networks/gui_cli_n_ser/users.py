@@ -1,12 +1,11 @@
 import json,threading,os,re
 
-
 import smtplib,ssl,random
 
 from email.message import EmailMessage
 
-SENDER_EMAIL = 'verify.idan.ipython@gmail.com'
-SENDER_PASSWORD = 'Python123!'
+
+
 class UsersDict:
     users: dict = {}
     lock = threading.Lock()
@@ -83,28 +82,8 @@ def load_users() -> dict:
 
 
 def is_valid(email) -> bool:
-    return re.match(r"^[A-Za-z_0-9]+@[A-Za-z_0-9]+.[A-Za-z_0-9]+",email) is not None
+    return re.match(r"^[A-Za-z_0-9\.]+@[A-Za-z_0-9\.]+\.[A-Za-z_0-9]+",email) is not None
     
     
 
 
-
-def send_email_verification(email_reciver: str) -> str:
-        
-        #send user an email with a verification code and return the code
-
-        em = EmailMessage()
-        em['from'] = SENDER_EMAIL
-        em['to'] = email_reciver
-        em['subject'] = 'verification'
-
-        code = str(random.randint(0,9999)).zfill(4)
-        em.set_content(f'your verification code is '+ code)
-        context = ssl.create_default_context()
-
-        with smtplib.SMTP_SSL('smtp.gmail.com',465,context=context) as smtp:
-            smtp.login(SENDER_EMAIL,SENDER_PASSWORD)
-            smtp.sendmail(SENDER_EMAIL,email_reciver,em.as_string())
-            print('sent')
-            
-        return code   

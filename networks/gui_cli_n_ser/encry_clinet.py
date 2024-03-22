@@ -6,8 +6,8 @@ import socket,traceback,smtplib,ssl,random
 from email.message import EmailMessage
 
 
-SENDER_EMAIL = 'verify.idan.ipython@gmail.com'
-SENDER_PASSWORD = 'Python123!'
+SENDER_EMAIL = 'verify.idan.python@gmail.com'
+SENDER_PASSWORD = "heeu zvaf jjgp vjnv"
 
 class GUI():
     
@@ -146,15 +146,15 @@ class GUI():
         
     
     def ver_window(self,display_wrong = False):
-        ver_root = tk.Tk()
-        ver_root.geometry("250x80+500+400")
-        ver_root.title("Verification Window")
-        ver_mainframe = tk.Frame(ver_root,background="white")
+        self.ver_root = tk.Tk()
+        self.ver_root.geometry("500x80+500+400")
+        self.ver_root.title("Verification Window")
+        ver_mainframe = tk.Frame(self.ver_root,background="white")
         ver_mainframe.pack(fill="both",expand=True)
         ver = ttk.Label(ver_mainframe,text="Please enter the verification code sent to your email",background="white",font=("Brass Mono",10),justify="center")
         ver.grid(row=0,column=0)
         
-        self.ver_code = ttk.Entry(ver_mainframe)
+        self.ver_code: ttk.Entry = ttk.Entry(ver_mainframe)
         self.ver_code.grid(row = 1, column = 0,sticky="NWES")
         
         
@@ -162,14 +162,17 @@ class GUI():
             wrong = ttk.Label(ver_mainframe,text="Wrong code, please try again",background="white",font=("Brass Mono",10),justify="center",foreground="red")
             wrong.grid(row=3,column=0)
         
-        close = ttk.Button(ver_mainframe,text="Done",command = lambda : ver_root.destroy())
+        close = ttk.Button(ver_mainframe,text="Done",command = self.get_code)
         close.grid(row=2,column=0)
         
-        ver_root.mainloop()
+        self.ver_root.mainloop()
         
-        return self.ver_code.get()
+
+        return self.code
         
-   
+    def get_code(self):
+        self.code = self.ver_code.get()
+        self.ver_root.destroy() 
 
 
 
@@ -265,13 +268,19 @@ def main(ip):
             if data == '':
                 print ('Seems server disconnected abnormal')
             
+            while command == 'err':
+                send_data(sock,parse_error(data,gui))
+                data = recive_by_size(sock)
+                command = data.split('~')[0] 
+            
 
             if command == 'code':
+                print("now we should recivece code")
                 correct_code = data.split('~')[2]
                 code = gui.ver_window()
                 while(correct_code != code):
                     code = gui.ver_window(True)
-                send_data(sock,f"code~{data.split('~')[1]}".encode())
+                send_data(sock,f"ack~{data.split('~')[1]}".encode())
                                   
                 
                 
