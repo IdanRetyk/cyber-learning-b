@@ -1,11 +1,9 @@
-import time
 
-start = time.time()
+def new_add(self:int, other:str) -> str:
+    return int(other) + self
+    
 
-n = 0
-while (n < 1000000000):
-    n +=1
 
-end = time.time()
-print(n)
-print(end-start)
+int.__add__ = new_add
+
+print(int.__add__(1,1))
