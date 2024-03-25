@@ -4,7 +4,7 @@ from tkinter import ttk
 import socket,traceback,smtplib,ssl,random
 
 from email.message import EmailMessage
-
+from PIL import Image
 
 SENDER_EMAIL = 'verify.idan.python@gmail.com'
 SENDER_PASSWORD = "heeu zvaf jjgp vjnv"
@@ -236,7 +236,9 @@ def recive_by_size(sock):
     logtcp('recv',msg)
     return msg
 
-
+def show_website():
+    img = Image.open('website.png')
+    img.show()
 
 def main(ip):
     """
@@ -259,49 +261,47 @@ def main(ip):
         to_send = gui.show_menu()
         print (f"to send {to_send} ")
         if to_send =='':
-            print("Selection error try again")
-            
-        try :
-            send_data(sock,to_send.encode())
-            data = recive_by_size(sock)
-            command = data.split('~')[0] 
-            if data == '':
-                print ('Seems server disconnected abnormal')
-            
-            while command == 'err':
-                send_data(sock,parse_error(data,gui))
+            print("Closing...")
+            sock.close()
+        else:
+            try :
+                send_data(sock,to_send.encode())
                 data = recive_by_size(sock)
                 command = data.split('~')[0] 
-            
-
-            if command == 'code':
-                print("now we should recivece code")
-                correct_code = data.split('~')[2]
-                code = gui.ver_window()
-                while(correct_code != code):
-                    code = gui.ver_window(True)
-                send_data(sock,f"ack~{data.split('~')[1]}".encode())
-                                  
+                if data == '':
+                    print ('Seems server disconnected abnormal')
                 
+                while command == 'err':
+                    send_data(sock,parse_error(data,gui))
+                    data = recive_by_size(sock)
+                    command = data.split('~')[0] 
                 
-            while command == 'err':
-                send_data(sock,parse_error(data,gui))
-                data = recive_by_size(sock)
-                command = data.split('~')[0] 
-           
-            
-            print(data, type(data))
 
-            
-        except socket.error as err:
-            print(f'Got socket error: {err}')
-            
-        except Exception as err:
-            print(f'General error: {err}')
-            print(traceback.format_exc())
-    gui.ack_window()
-    print ('Bye')
-    sock.close()
+                if command == 'code':
+                    correct_code = data.split('~')[2]
+                    code = gui.ver_window()
+                    while(correct_code != code):
+                        code = gui.ver_window(True)
+                    send_data(sock,f"ack~{data.split('~')[1]}".encode())
+                                    
+                    
+                    
+
+
+                
+            except socket.error as err:
+                print(f'Got socket error: {err}')
+                print(traceback.format_exc())
+                
+            except Exception as err:
+                print(f'General error: {err}')
+                print(traceback.format_exc())
+
+
+            show_website()
+            print ('Bye')
+            sock.close()
+    
 
 
 if __name__ == '__main__':
