@@ -6,9 +6,12 @@ import socket,traceback,smtplib,ssl,random
 from email.message import EmailMessage
 from PIL import Image
 
+from aes_helper import AES_encrypt,AES_decrypt
+from Crypto.Util.Padding import pad, unpad
+
 SENDER_EMAIL = 'verify.idan.python@gmail.com'
 SENDER_PASSWORD = "heeu zvaf jjgp vjnv"
-
+KEY = b'1234567890123456'
 class GUI():
     
 
@@ -195,12 +198,19 @@ def send_data(sock, bdata):
     e.g. from 'abcd' will send  b'00000004~abcd'
     return: void
     """
+    #encryps data with AES
+    #it sends first the iv and then the encrypted data
+
+    
     if len(bdata) == 0:
         sock.send(b'')
-    else:
-        bytearray_data = str(len(bdata)).zfill(8).encode() + b'~' + bdata
-        sock.send(bytearray_data)
-        logtcp('sent', bytearray_data)
+        return
+        
+    iv, ciphertext = AES_encrypt(KEY,bdata)
+    bytearray_data: bytes = str(len(ciphertext)).zfill(8).encode() + b'~' + ciphertext
+    to_send :bytes = iv + b'|' + bytearray_data
+    sock.send(to_send)
+    logtcp('sent', to_send)
 
 
 
@@ -221,20 +231,42 @@ def parse_error(data,gui: GUI):
 
     return to_send.encode()
 
-def recive_by_size(sock):
+def recive_by_size(sock:socket):
+
+    #this will also decrypt the data with AES
     
-    size = ''
-    while not size.__contains__('~'):
-        size += sock.recv(4).decode()
-    parts = size.split('~')
-    size = int(parts[0])
+    # sock.settimeout(3)
     
-    msg = parts[1]
-    while len(msg) != size:
+    iv = sock.recv(16)
+    if iv == b'' :#clinet disconnected
+        return b''
+    
+    #in case not all the data wax recieved at once
+    while not b'|' in iv:
+        iv += sock.recv(4)
+    #will probably recive more than just the iv
+    parts = iv.split(b'|')
+    iv = parts[0]
+    
+    #the rest of the recived data belongs to the size
+    size = parts[1]
+    while not b'~' in size:
+        size += sock.recv(4)
+    
+    parts = size.split(b'~')
+    size = int(parts[0].decode())
+    
+    enc_msg = parts[1]
+    while len(enc_msg) != size:
         
-        msg += sock.recv(size).decode()
+        enc_msg += sock.recv(size)
+    
+    msg = AES_decrypt(KEY,iv,enc_msg)
     logtcp('recv',msg)
-    return msg
+    
+    #after we got both the msg and the iv we can decrypt the data
+    return AES_decrypt(KEY,iv,msg)
+
 
 def show_website():
     img = Image.open('website.png')
@@ -284,8 +316,10 @@ def main(ip):
                         code = gui.ver_window(True)
                     send_data(sock,f"ack~{data.split('~')[1]}".encode())
                                     
-                    
-                    
+                
+                #acknowledge window
+                #at this point user is signed in successfully
+                show_website()
 
 
                 
@@ -298,7 +332,7 @@ def main(ip):
                 print(traceback.format_exc())
 
 
-            show_website()
+            
             print ('Bye')
             sock.close()
     

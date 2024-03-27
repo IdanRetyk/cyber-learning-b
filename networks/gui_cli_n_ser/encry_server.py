@@ -5,6 +5,8 @@ import traceback,smtplib,ssl,random
 from email.message import EmailMessage
 
 from users import UsersDict
+from aes_helper import AES_encrypt,AES_decrypt
+from Crypto.Util.Padding import pad, unpad
 from hashlib import sha256
 
 
@@ -17,6 +19,7 @@ PEPPER = "neverhackme"
 SENDER_EMAIL = 'verify.idan.python@gmail.com'
 SENDER_PASSWORD = "heeu zvaf jjgp vjnv"
 
+KEY = b'1234567890123456'
 
 
 
@@ -31,25 +34,63 @@ def logtcp(dir, tid, byte_data):
         print(f'{tid} S LOG:Recieved <<< {byte_data}')
 
 
-def send_data(sock, tid, bdata):
+def send_data(sock, bdata):
     """
-    Send to client byte array data.
-    Will add 8 bytes message length as the first field.
-    E.g., from 'abcd' will send b'00000004~abcd'.
-    Return: void
+    send to client byte array data
+    will add 8 bytes message length as first field
+    e.g. from 'abcd' will send  b'00000004~abcd'
+    return: void
     """
-    bytearray_data = (str(len(bdata)).zfill(8) + '~' + bdata).encode()
-    sock.send(bytearray_data)
-    logtcp('sent', tid, bytearray_data)
-    print("")
+    #encryps data with AES
+    #it sends first the iv and then the encrypted data
+
+    
+    if len(bdata) == 0:
+        sock.send(b'')
+        return
+        
+    iv, ciphertext = AES_encrypt(KEY,bdata)
+    bytearray_data: bytes = str(len(ciphertext)).zfill(8).encode() + b'~' + ciphertext
+    to_send :bytes = iv + b'|' + bytearray_data
+    sock.send(to_send)
+    logtcp('sent', bytearray_data)
 
 
-def check_length(message):
-    """
-    Check message length.
-    Return: string - error message
-    """
-    return b''
+def recive_by_size(sock:socket):
+
+    #this will also decrypt the data with AES
+    
+    # sock.settimeout(3)
+    
+    iv = sock.recv(16)
+    if iv == b'' :#clinet disconnected
+        return b''
+    
+    #in case not all the data wax recieved at once
+    while not b'|' in iv:
+        iv += sock.recv(4)
+    #will probably recive more than just the iv
+    parts = iv.split(b'|')
+    iv = parts[0]
+    
+    #the rest of the recived data belongs to the size
+    size = parts[1]
+    while not b'~' in size:
+        size += sock.recv(4)
+    
+    parts = size.split(b'~')
+    size = int(parts[0].decode())
+    
+    enc_msg = parts[1]
+    while len(enc_msg) != size:
+        
+        enc_msg += sock.recv(size)
+    
+    msg = AES_decrypt(KEY,iv,enc_msg)
+    logtcp('recv',msg)
+    
+    #after we got both the msg and the iv we can decrypt the data
+    return AES_decrypt(KEY,iv,msg)
 
 
 def _hash(data):
@@ -128,12 +169,12 @@ def handle_client(sock, tid, addr):
             print('will close due to main server issue')
             break
         try:
-            byte_data = sock.recv(1000)  # todo improve it to recv by message size
+            byte_data = recive_by_size(sock)  # todo improve it to recv by message size
             if byte_data == b'':
                 print('Seems client disconnected')
                 break
-            logtcp('recv', tid, byte_data)
-            err_size = check_length(byte_data)
+
+            err_size = b''
             if err_size != b'':
                 to_send = err_size
             else:
