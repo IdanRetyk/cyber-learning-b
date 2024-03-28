@@ -23,18 +23,18 @@ KEY = b'1234567890123456'
 
 
 
-def logtcp(dir, tid, byte_data):
+def logtcp(dir, byte_data,):
     """
     Log direction, tid, and all TCP byte array data.
     Return: void
     """
     if dir == 'sent':
-        print(f'{tid} S LOG:Sent     >>> {byte_data}')
+        print(f'S LOG:Sent     >>> {byte_data}')
     else:
-        print(f'{tid} S LOG:Recieved <<< {byte_data}')
+        print(f'S LOG:Recieved <<< {byte_data}')
 
 
-def send_data(sock, bdata):
+def send_data(sock, tid, bdata):
     """
     send to client byte array data
     will add 8 bytes message length as first field
@@ -53,18 +53,24 @@ def send_data(sock, bdata):
     bytearray_data: bytes = str(len(ciphertext)).zfill(8).encode() + b'~' + ciphertext
     to_send :bytes = iv + b'|' + bytearray_data
     sock.send(to_send)
-    logtcp('sent', bytearray_data)
+    logtcp('sent', to_send)
 
 
-def recive_by_size(sock:socket):
+def recive_by_size(sock:socket) -> str:
+    """recive msg with sockets, using the first 8 bytes as the size of the msg and decrypting it with AES
+    the message is in the format of 'iv|size~encrypted_msg'
 
+
+    Returns:
+        str: the mesesage itself (without the iv and the size)
+    """
     #this will also decrypt the data with AES
     
     # sock.settimeout(3)
     
     iv = sock.recv(16)
     if iv == b'' :#clinet disconnected
-        return b''
+        return ''
     
     #in case not all the data wax recieved at once
     while not b'|' in iv:
@@ -90,7 +96,7 @@ def recive_by_size(sock:socket):
     logtcp('recv',msg)
     
     #after we got both the msg and the iv we can decrypt the data
-    return AES_decrypt(KEY,iv,msg)
+    return msg.decode()
 
 
 def _hash(data):
@@ -169,7 +175,7 @@ def handle_client(sock, tid, addr):
             print('will close due to main server issue')
             break
         try:
-            byte_data = recive_by_size(sock)  # todo improve it to recv by message size
+            byte_data = recive_by_size(sock).encode()  # todo improve it to recv by message size
             if byte_data == b'':
                 print('Seems client disconnected')
                 break
@@ -178,10 +184,9 @@ def handle_client(sock, tid, addr):
             if err_size != b'':
                 to_send = err_size
             else:
-                byte_data = byte_data[9:]  # remove length field
                 to_send, finish = handle_request(byte_data)
             if to_send != '':
-                send_data(sock, tid, to_send)
+                send_data(sock, tid, to_send.encode())
             if finish:
                 time.sleep(1)
                 break

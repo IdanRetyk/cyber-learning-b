@@ -231,15 +231,21 @@ def parse_error(data,gui: GUI):
 
     return to_send.encode()
 
-def recive_by_size(sock:socket):
+def recive_by_size(sock:socket) -> str:
+    """recive msg with sockets, using the first 8 bytes as the size of the msg and decrypting it with AES
+    the message is in the format of 'iv|size~encrypted_msg'
 
+
+    Returns:
+        str: the mesesage itself (without the iv and the size)
+    """
     #this will also decrypt the data with AES
     
     # sock.settimeout(3)
     
     iv = sock.recv(16)
     if iv == b'' :#clinet disconnected
-        return b''
+        return ''
     
     #in case not all the data wax recieved at once
     while not b'|' in iv:
@@ -265,7 +271,9 @@ def recive_by_size(sock:socket):
     logtcp('recv',msg)
     
     #after we got both the msg and the iv we can decrypt the data
-    return AES_decrypt(KEY,iv,msg)
+    return msg.decode()
+
+
 
 
 def show_website():
@@ -302,6 +310,7 @@ def main(ip):
                 command = data.split('~')[0] 
                 if data == '':
                     print ('Seems server disconnected abnormal')
+                    return
                 
                 while command == 'err':
                     send_data(sock,parse_error(data,gui))
