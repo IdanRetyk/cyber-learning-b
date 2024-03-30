@@ -5,13 +5,16 @@ import socket,traceback,smtplib,ssl,random
 
 from email.message import EmailMessage
 from PIL import Image
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
 
 from aes_helper import AES_encrypt,AES_decrypt
-from Crypto.Util.Padding import pad, unpad
+
 
 SENDER_EMAIL = 'verify.idan.python@gmail.com'
 SENDER_PASSWORD = "heeu zvaf jjgp vjnv"
-KEY = b'1234567890123456'
+
+KEY = b'' # - gets updated in main 
 class GUI():
     
 
@@ -274,7 +277,31 @@ def recive_by_size(sock:socket) -> str:
     return msg.decode()
 
 
+#RSA
+def AES_key_exchange(sock: socket) -> bytes:
+    """
+    swaps with server keys for AES using RSA
+    first the server sends public key, than clinet sends AES key encrypted using the public key, than server decrypts the AES key. Handshake done
+    
 
+    Args:
+        sock (socket): the socket
+
+    Returns:
+        bytes: AES key
+    """
+
+    aes_key = generate_key()
+
+    server_key = sock.recv(1024)
+    sock.send(PKCS1_OAEP.new(RSA.import_key(server_key)).encrypt(aes_key))
+    print("Sent key: ", aes_key)
+    return aes_key
+
+
+def generate_key() -> bytes:
+    #generate AES key randomly and return it
+    return bytes(random.randint(0,255) for _ in range(16))
 
 def show_website():
     img = Image.open('website.png')
@@ -284,6 +311,7 @@ def main(ip):
     """
     main client - handle socket and main loop
     """
+    global KEY
     connected = False
 
     sock= socket.socket()
@@ -297,6 +325,9 @@ def main(ip):
         print(f'Error while trying to connect.  Check ip or port -- {ip}:{port}')
 
     if (connected):
+        
+        KEY = AES_key_exchange(sock)
+        
         gui = GUI()
         to_send = gui.show_menu()
         print (f"to send {to_send} ")
@@ -314,7 +345,7 @@ def main(ip):
                 
                 while command == 'err':
                     send_data(sock,parse_error(data,gui))
-                    data = recive_by_size(sock)
+                    data = recive_by_size(sock,)
                     command = data.split('~')[0] 
                 
 

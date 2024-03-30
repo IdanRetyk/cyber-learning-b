@@ -2,12 +2,20 @@ import socket, threading, traceback,time
 import os 
 import traceback,smtplib,ssl,random
 
+
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+
 from email.message import EmailMessage
+
+from hashlib import sha256
+
 
 from users import UsersDict
 from aes_helper import AES_encrypt,AES_decrypt
-from Crypto.Util.Padding import pad, unpad
-from hashlib import sha256
+
+
+
 
 
 #fixed variables
@@ -19,7 +27,7 @@ PEPPER = "neverhackme"
 SENDER_EMAIL = 'verify.idan.python@gmail.com'
 SENDER_PASSWORD = "heeu zvaf jjgp vjnv"
 
-KEY = b'1234567890123456'
+
 
 
 
@@ -34,7 +42,7 @@ def logtcp(dir, byte_data,):
         print(f'S LOG:Recieved <<< {byte_data}')
 
 
-def send_data(sock, tid, bdata):
+def send_data(sock, tid, bdata,key):
     """
     send to client byte array data
     will add 8 bytes message length as first field
@@ -49,14 +57,14 @@ def send_data(sock, tid, bdata):
         sock.send(b'')
         return
         
-    iv, ciphertext = AES_encrypt(KEY,bdata)
+    iv, ciphertext = AES_encrypt(key,bdata)
     bytearray_data: bytes = str(len(ciphertext)).zfill(8).encode() + b'~' + ciphertext
     to_send :bytes = iv + b'|' + bytearray_data
     sock.send(to_send)
     logtcp('sent', to_send)
 
 
-def recive_by_size(sock:socket) -> str:
+def recive_by_size(sock:socket, key:bytes) -> str:
     """recive msg with sockets, using the first 8 bytes as the size of the msg and decrypting it with AES
     the message is in the format of 'iv|size~encrypted_msg'
 
@@ -92,7 +100,7 @@ def recive_by_size(sock:socket) -> str:
         
         enc_msg += sock.recv(size)
     
-    msg = AES_decrypt(KEY,iv,enc_msg)
+    msg = AES_decrypt(key,iv,enc_msg)
     logtcp('recv',msg)
     
     #after we got both the msg and the iv we can decrypt the data
@@ -129,8 +137,53 @@ def send_email_verification(email_reciver: str,code:str) -> str:
             print('sent')
             
         return code   
+
+
+
+
+def generate_keys():
+    """
+    generates keys for RSA
+    
+    returns:
+    tuple(private_key, public_key)
+    """
     
     
+    key = RSA.generate(2048)
+    private_key = key.export_key()
+    public_key = key.publickey().export_key()
+    return private_key, public_key
+
+#RSA
+def AES_key_exchange(sock:socket) -> bytes:
+    """
+    swaps with clinet keys for AES using RSA
+    first the server sends public key, than clinet sends AES key encrypted using the public key, than server decrypts the AES key. Handshake done
+    
+
+    Args:
+        sock (socket): the socket
+
+    Returns:
+        bytes: AES key
+    """
+    
+    private_key, public_key = generate_keys()
+    sock.send(public_key)
+    
+
+
+    
+    enc_key = sock.recv(1024)
+
+    AES_key = PKCS1_OAEP.new(RSA.import_key(private_key)).decrypt(enc_key)
+    
+    print("Received key:", AES_key)
+    return AES_key
+    
+    
+
 
 def handle_request(data):
     finish = False
@@ -170,12 +223,17 @@ def handle_client(sock, tid, addr):
     all_to_die = False
     finish = False
     print(f'New Client number {tid} from {addr}')
+    
+    key = AES_key_exchange(sock)
+    
+    
+    
     while not finish:
         if all_to_die:
             print('will close due to main server issue')
             break
         try:
-            byte_data = recive_by_size(sock).encode()  # todo improve it to recv by message size
+            byte_data = recive_by_size(sock,key).encode()  
             if byte_data == b'':
                 print('Seems client disconnected')
                 break
@@ -186,7 +244,7 @@ def handle_client(sock, tid, addr):
             else:
                 to_send, finish = handle_request(byte_data)
             if to_send != '':
-                send_data(sock, tid, to_send.encode())
+                send_data(sock, tid, to_send.encode(),key)
             if finish:
                 time.sleep(1)
                 break
