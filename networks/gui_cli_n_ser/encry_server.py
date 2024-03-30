@@ -211,6 +211,43 @@ def handle_request(data):
     return to_send, finish
 
 
+
+
+def parse_type_request(sock: socket) -> bool:
+    """
+    before starting connection, clinet sends how to transfer the keys. this function hundles this request. only supported method is rsa
+    this function will end only when clinet chooses rsa or disconnect
+    
+    return if client disconnected.
+    """
+    
+    data: bytes = sock.recv(1024)
+    fields = data.split(b'~')
+    command :str = fields[0].decode()
+    _type  : str= fields[1].decode()
+    
+    while(True):
+        if data == b'':
+                print('Seems client disconnected')
+                return True
+        
+        
+        if command == "type":
+            if _type == "RSA":
+                #supported
+                sock.send(b'ack')
+                return False
+            else:
+                #not supported
+                sock.send(b"nack")
+        else:
+            raise ValueError("expecting type request, got ", data)
+        data: bytes = sock.recv(1024)
+        fields = data.split(b'~')
+        command = fields[0].decode()
+        _type = fields[1].decode()
+
+
 def handle_client(sock, tid, addr):
     """
     Main client thread loop (in the server),
@@ -224,9 +261,10 @@ def handle_client(sock, tid, addr):
     finish = False
     print(f'New Client number {tid} from {addr}')
     
+    finish = parse_type_request(sock)
+    
     key = AES_key_exchange(sock)
-    
-    
+
     
     while not finish:
         if all_to_die:

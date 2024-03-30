@@ -153,7 +153,7 @@ class GUI():
     
     def ver_window(self,display_wrong = False):
         self.ver_root = tk.Tk()
-        self.ver_root.geometry("500x80+500+400")
+        self.ver_root.geometry("500x120+500+400")
         self.ver_root.title("Verification Window")
         ver_mainframe = tk.Frame(self.ver_root,background="white")
         ver_mainframe.pack(fill="both",expand=True)
@@ -180,7 +180,44 @@ class GUI():
         self.code = self.ver_code.get()
         self.ver_root.destroy() 
 
+    
+    def get_ecnrypion_type(self):
+        int_value = self.var.get()
+        if int_value == 1:
+            self.type = "RSA"
+        if int_value == 2:
+            self.type = "DH"
+        
+        self.choose_root.destroy()
+    
+    def choose_ecnrypion_type(self, error = False):
+        #display this window before handshake, to see what handshake to do. __Author note__: server only accept RSA.
 
+
+        
+        self.choose_root = tk.Tk()
+        self.choose_root.geometry("200x150+500+400")
+        self.choose_root.title("Choose type")
+        choose_mainframe = tk.Frame(self.choose_root,background="white")
+        choose_mainframe.pack(fill="both",expand=True)
+        
+        self.var = tk.IntVar()
+        R1 = ttk.Radiobutton(choose_mainframe, text="RSA                 ", variable=self.var, value=1)
+        R1.grid(row=0,column=0)
+        R2 = ttk.Radiobutton(choose_mainframe ,text="Diffie Hellman", variable=self.var, value=2)
+        R2.grid(row=1,column=0)
+
+        
+        choose = ttk.Button(choose_mainframe, text="confirm",command=self.get_ecnrypion_type)
+        choose.grid(row=3,column=0)
+        
+        if (error):
+            text = ttk.Label(self.choose_root, text= "Server doesn't support this type", foreground= "red")
+            text.pack(anchor=tk.W)
+        
+        self.choose_root.mainloop()
+        
+        return self.type
 
 
 def logtcp(dir, byte_data):
@@ -307,6 +344,7 @@ def show_website():
     img = Image.open('website.png')
     img.show()
 
+
 def main(ip):
     """
     main client - handle socket and main loop
@@ -326,9 +364,32 @@ def main(ip):
 
     if (connected):
         
-        KEY = AES_key_exchange(sock)
+
         
         gui = GUI()
+        
+        enc_type = gui.choose_ecnrypion_type()
+        
+        #<choosing handshake type>
+        if enc_type == "RSA":
+            sock.send(b'type~RSA')
+        if enc_type == "DH":
+            sock.send(b'type~DH')
+        data = sock.recv(1024)
+        
+        while (data != b'ack'):
+            enc_type = gui.choose_ecnrypion_type(True)
+            if enc_type == "RSA":
+                sock.send(b'type~RSA')
+            if enc_type == "DH":
+                sock.send(b'type~DH')
+            data = sock.recv(1024)
+        #</>
+        
+        
+        KEY = AES_key_exchange(sock)
+        
+        
         to_send = gui.show_menu()
         print (f"to send {to_send} ")
         if to_send =='':
