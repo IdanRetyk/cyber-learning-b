@@ -1,0 +1,6 @@
+{
+    "python.analysis.autoFormatStrings": true,
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.defaultFormatter": "mikoz.black-py"
+}

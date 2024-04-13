@@ -1,31 +1,35 @@
 
-def merge( nums1: list[int], m: int, nums2: list[int], n: int) -> None:
-        """
-        Do not return anything, modify nums1 in-place instead.
-        """
-        nums1_ = [num for num in nums1]
+from collections import deque
 
-        i = 0
-        j = 0
+def trap( height: list[int]) -> int:
+        
+        
+    max_ = 0,0 # Value, Index
 
-
-        for k in range(len(nums1)):
-            if (i == m):
-                nums1[k] = nums2[j]
-                j += 1
-            elif (j == n):
-                nums1[k] = nums1_[i]
-                i += 1
-            elif nums1_[i] < nums2[j]:
-                nums1[k] = nums1_[i]
-                i += 1
-            else:
-                nums1[k] = nums2[j]
-                j += 1
+    for i in range(len(height)):
+        if max_[0] < height[i]:
+            max_ = height[i], i
     
-nums1 = [1,2,3,0,0,0]
-nums2 = [2,5,6]
+    _,max_index = max_
 
-merge(nums1,3,nums2,3)
+    count = 0
 
+    left_max = 0,0 # Height of heighest build on the left.
+    for i in range(max_index):
+        if left_max[0] < height[i]:
+            left_max = height[i], i
+        else:
+            count += left_max[0] - height[i]
+    
+    
+    for i in range(7,3,-1):
+        print(i)
+    
+    return count
+
+
+nums1 = [1,2,3,4,5,6]
+
+
+print(trap([0,1,0,2,1,0,1,3,2,1,2,1]))
 print(nums1)
