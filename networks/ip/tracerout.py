@@ -1,6 +1,8 @@
-from scapy.all import IP,ICMP,sr1
+from scapy.all import sr1
+from scapy.layers.inet import IP, ICMP
 import sys
 import time
+
 
 def traceroute(target):
     count = 1
@@ -14,22 +16,20 @@ def traceroute(target):
         reply = sr1(packet, verbose=0, timeout=5)
         end = time.time()
 
-        
         if reply is None:
             break
 
         if reply.src == target:
             hops[reply.src] = end - start
             break
-        
-        
-        
+
         hops[reply.src] = end - start
         count += 1
 
     print(f"Traceroute to {target}:")
     for key in hops.keys():
         print(f"{key} ({hops[key]:.3f} ms)")
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
