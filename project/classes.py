@@ -1,168 +1,95 @@
 import random
 
 
-class Player:
-    def __init__(self, color: str, name: str, addr: tuple) -> None:
-        self.__color = color
-        self.__name = name
-        self.__addr = addr
-        self.__pos = 0
-        self.__double_streak = 0
-        self.__money = 0
-
-    def roll_dice(self) -> int:
-        return random.randint(1, 6)
-
-    def play(self):
-        dice1 = self.roll_dice()
-        dice2 = self.roll_dice()
-
-        if dice1 == dice2:
-            self.__double_streak += 1
-        else:
-            self.__double_streak = 0
-
-        self.__pos += dice1 + dice2
-        card = self.get_card()
-
-    def earn_or_pay(self, amount: int) -> None:
-        # If amount positive player earn, if negative player pay
-        self.__money += amount
-
-    def get_color(self) -> str:
-        return self.__color
-
-    def set_color(self, color: str) -> None:
-        self.__color = color
-
-    def get_name(self) -> str:
-        return self.__name
-
-    def set_name(self, name: str) -> None:
-        self.__name = name
-
-    def get_addr(self) -> tuple:
-        return self.__addr
-
-    def set_addr(self, addr: tuple) -> None:
-        self.__addr = addr
-
-    def get_pos(self) -> int:
-        return self.__pos
-
-    def set_pos(self, location: int) -> None:
-        self.__pos = location
-
-    def get_double_streak(self) -> int:
-        return self.__double_streak
-
-    def set_double_streak(self, double_streak: int) -> None:
-        self.__double_streak = double_streak
-
-    def get_money(self) -> int:
-        return self.__money
-
-    def set_money(self, money: int) -> None:
-        self.__money = money
-
 
 class Card:
-    def __init__(self, pos: int, name: str) -> None:
-        self.__pos = pos
-        self.__name = name
-
-    def get_position(self) -> int:
-        return self.__pos
-
-    def set_position(self, location: int) -> None:
-        self.__pos = location
-
-    def get_name(self) -> str:
-        return self.__name
-
-    def set_name(self, name: str) -> None:
-        self.__name = name
-
-
-
-class House(Card):
-    def __init__(self, pos: int, name: str, purchase_price: int, rental_price: list[int]) -> None:
-        super().__init__(pos, name)
-        self.__price = purchase_price
-        self.__rental = rental_price
-        self.__owner: Player = None
-        self.__house_count = 0
-    
-    def get_price(self) -> int:
-        return self.__price
-
-    def get_rental(self, houses_count: int = 0):
-        return self.__rental[houses_count]
-    
-    def get_rental_list(self) -> list[int]:
-        return self.__rental
-    
-    def set_owner(self,new_owner: Player):
-        self.__owner = new_owner
-
-    def get_owner(self) -> Player:
-        return self.__owner
-
-
-class SupriseCard():
-    def __init__(self, description: str, result: str) -> None:
-        # Result is the final outcome of the card. ex. (gain 50$, give to each player 20$ and so on)
-        self.__description = description
-        self.__result = result
-
-
-class Suprise(Card):
-    def __init__(self, pos: int, name: str) -> None:
-        super().__init__(pos, name)
-        self.__options: list[SupriseCard] = self.get_suprise_options()
-    
-    def draw_card(self) -> SupriseCard:
-        return random.choice(self.__options)
-        
-    def get_suprise_options(self) -> list[SupriseCard]:
-        # This initailze all the possible outcome from the suprise
-        return []    
-    
-    
-
-
-class Game:
-    def __init__(self,players: list[Player] = []) -> None:
-        self.__board: Board = Board()
-        self.__players = players
-
-    def do_move(self, player: Player, dice_result: int) -> None:
-        # Move player, check what if it has to pay a player or something.
-        pass
-
-    def pay(self,from_:Player ,to: Player, amount: int) -> None:
-        """from_ player loses money, to player earns.
+    def __init__(self,num: int ,suit: str ) -> None:
+        """
 
         Args:
-
-            amount (int): always positive
+            num (int): num is a number between 1 - 13 represting cards between A, 2, ..., 10, J, Q, K
+            suit (str): one of four options - D, C, H, S
+        
+        Raises:
+            ValueError, if the above condition aren't met
         """
-        if amount > 0:
-            from_.earn_or_pay(-amount)
-            to.earn_or_pay(amount)
-        else:
-            raise ValueError("amount has to be positive, not ", amount)
+        
+        if num < 1 or num > 13:
+            raise ValueError("Num value should be between 1,13 not " ,num)
+        
+        if suit not in ('D','C','H','S'):
+            raise ValueError("Invalid suit - ", suit)
+        
+        self.__num = num
+        self.__suit = suit
 
+    def get_suit(self) -> str:
+        return self.__suit
 
-class Board:
-    def __init__(self,) -> None:
-        self.__board: list[Card] = []
+    def get_num(self) -> int:
+        return self.__num
     
-    def get_card_at_position(self,position: int) -> Card:
-        return self.__board[position]
-    
-    def get_board(self) -> list[Card]:
-        return self.__board
+    def __str__(self) -> str:
+        # TODO should display the correct picture.
+        raise NotImplementedError()
 
-    def set_board(self, board: list[Card]) -> None:
-        self.__board = board
+
+class CardDeck:
+    def __init__(self) -> None:
+        self.__deck :list[Card] = []
+        for i in range(1,14):
+            self.__deck.append(Card(i,'S'))
+            self.__deck.append(Card(i,'H'))
+            self.__deck.append(Card(i,'D'))
+            self.__deck.append(Card(i,'C'))
+    
+    
+    def shuffle(self) -> None:
+        """
+        Shuffles deck in place
+        """
+        random.shuffle(self.__deck)
+    
+    def draw_card(self) -> Card:
+        return self.__deck.pop()
+    
+    
+class Player:
+    def __init__(self,addr: tuple[str,int],position : int) -> None:
+        self.__addr = addr
+        self.__pos = position
+    
+
+class Game:
+    def __init__(self,addr_arr: list[tuple[str,int]]) -> None:
+        self.__deck = CardDeck()
+        self.__deck.shuffle()
+        self.__community_cards = [] # The cards everyone can see
+        self.__players: list[Player]= []
+        
+        pos_count = 1
+        for addr in addr_arr:
+            self.__players.append(Player(addr,pos_count))
+            pos_count += 1
+        
+        
+        self.__deal_cards()
+    
+    def __deal_cards(self):
+        pass
+    
+    def show_flop(self):
+        for _ in range(3):
+            self.__community_cards.append(self.__deck.draw_card())
+    
+    def show_turn(self):
+        self.__community_cards.append(self.__deck.draw_card())
+    
+    def show_river(self):
+        self.__community_cards.append(self.__deck.draw_card())
+
+    def get_players_cards(self,cards: list[tuple[Card,Card]]):
+        self.__player_cards = cards
+    
+    def calculate_winners(self):
+        pass
