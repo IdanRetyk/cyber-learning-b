@@ -1,5 +1,4 @@
-__author__ = 'Yossi'
-# 2.6  client server October 2021
+
 
 import socket, sys,traceback
 import base64
@@ -15,7 +14,7 @@ def logtcp(dir, byte_data):
         print(f'C LOG:Recieved <<<{byte_data}')
 
 
-def send_data(sock, bdata):
+def send_data(sock, bdata: bytes):
     """
     send to client byte array data
     will add 8 bytes message length as first field
@@ -32,15 +31,8 @@ def menu():
     show client menu
     return: string with selection
     """
-    print('\n  1. take screenshot')
-    print('\n  2. send file')
-    print('\n  3. display directory')
-    print('\n  4. delete file ')
-    print('\n  5. copy file ')
-    print('\n  6. run executeable file')
-    print('\n  7. notify exit')
-    print('\n  (8. some invalid data for testing)')
-    return input(' which action do you want? (1-8) ' )
+    print("user chooses action. return number of action")
+    return 0
 
 
 def protocol_build_request(from_user):
@@ -48,27 +40,9 @@ def protocol_build_request(from_user):
     build the request according to user selection and protocol
     return: string - msg code
     """
-    if from_user == '1':
-        return 'SCRN~' + input ('enter name the screen shot will be saved ')
-    elif from_user == '2':
-        return 'SNDF~' + input('enter file absolute or relative path ')
-    elif from_user == '3':
-        return 'DIRS~' + input('enter directory absolute or relative path ')
-    elif from_user == '4':
-        return 'DELF~' + input('enter file absolute or relative path ')
-    elif from_user == '5':
-        pathFrom = input('enter file current location path')
-        pathTo = input('enter file copy location path')
-        return 'COPF~' + pathFrom + '~' + pathTo 
-    elif from_user == '6':
-        return 'RUNF~' + input('enter file absolute or relatvie path ')
-    elif from_user == '7':
-        return 'EXIT'
-    elif from_user == '8':
-        return input("enter free text data to send> ")
-    else:
-        return ''
-
+    
+    print("protocol_build_request not implemented")
+    return str()
 
 def protocol_parse_reply(reply):
     """
@@ -76,33 +50,10 @@ def protocol_parse_reply(reply):
     return: answer from server string
     """
    
-    to_show = 'Invalid reply from server'
-    try:
-        fields = reply
-        if '~' in reply:
-            fields = reply.split('~')
-        code = fields[0]
-        if code == 'SCRN'  or code == 'DELF' or code == 'COPF' or code == 'RUNS':
-            to_show = fields[1]
-        elif code == 'DIRS':
-            to_show = build_dir_string(fields[1])
-        elif code == "SNDF":
-            to_show = base64.b64decode(fields[1].encode('ascii')).decode('ascii')
-        elif code == 'EXIT':
-            to_show = 'Server acknowledged the exit message';
-        elif code == 'ERRR':
-            to_show = 'unknown command'
-    except:
-       print ('Server replay bad format')
-    return to_show
+    print("protocol_parse_reply not implemented")
+    return str()
 
 
-
-def build_dir_string(st):
-    base64_message = st
-    base64_bytes = base64_message.encode('ascii')
-    message_bytes = base64.b64decode(base64_bytes)
-    st = message_bytes.decode('ascii')
     
 
 
@@ -124,7 +75,7 @@ def handle_reply(reply): #reply is the message without the length field
 def recive_by_size(sock):
     
     size = ''
-    while not size.__contains__('~'):
+    while not '~' in size:
         size += sock.recv(4).decode()
     parts = size.split('~')
     size = int(parts[0])

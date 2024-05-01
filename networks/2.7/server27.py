@@ -32,63 +32,22 @@ def send_data(sock,tid,bdata):
 	print("")
 
 
-def check_length(message):
-	"""
-	check message length
-	return: string - error message
-	"""
-	return b''
 
 
 
-
-def take_screenshot(save_name):
-   
-    try:
-        img = pyautogui.screenshot()
-        img.save(rf'{SCREENSHOTS_FOLDER}\{save_name}.jpg')
-        return True
-    except Exception as err:
-        return False
-
-def send_file(filePath):
-    
-	try:
-		with open(filePath,'r') as file:
-			print(file.read())
-			return file.read()
-	except Exception as err:
-		print(err)
-		return False
 	
 
 
-def get_dir(filePath):
-	"""return server name from os environment """
-	pass
-
-
-def delete_file(filePath):
-	try:
-		os.remove(filePath)
-		return True
-	except:
-		return False
 
 
 
-def copy_file(fromPath, toPath):
-	try:
-		shutil.copy(fromPath,toPath)
-		return True
-	except:
-		return False
+
+
+
     
 
 
 
-def run_process(process):
-    pass
 
 
 
@@ -100,56 +59,15 @@ def protocol_build_reply(request):
 	Handle client request and prepare the reply info
 	string:return: reply
 	"""
-	request = request.decode()
-	fields = request.split('~')
-	request_code = fields[0]
-	print (request_code)
-	if request_code == 'SCRN':
-		if (take_screenshot(fields[1])):
-			reply = 'SCRN~SUCCES'
-		else:
-			reply = 'SCRN~ERR'
-
-	elif request_code == 'SNDF':
-		if (send_file(fields[1])):
-			reply ='SNDF~' + send_file(fields[1])
-		else:
-			reply ='ERRR~sendfileerror'
-
-	elif request_code == 'DIRS':
-		reply ='DIRS' + '~' + get_dir(fields[1])
-
-	elif request_code == 'DELF':
-		if (delete_file(fields[1])[1]):
-			reply = 'DELF~SUCCES'
-		else:
-			reply = 'DELF~ERR'
-
-	elif request_code == 'COPF':
-		if (copy_file(fields[1],fields[2])[1]):
-			reply = 'COPF~SUCCES'
-		else:
-			reply = 'COPF~ERR'
-
-	elif request_code == 'RUNS':
-		if (run_process(fields[1])[1]):
-			reply = 'RUNS~SUCCES'
-		else:
-			reply = 'RUNS~ERR'
-
-	elif request_code == 'EXIT':
-		reply= 'EXIT'
-
-	else:
-		reply = 'ERRR~255~unknown command'
-		fields = ''
-	return reply.encode()
+	
+	print("protocol_build_reply not implemnted")
+	return b""
 
 
 def handle_request(request):
 	# """
 	# Hadle client request
-	# tuple :return: return message to send to client and bool if to close the client socket
+	# tuple :return: return message (bytes) to send to client and bool if to close the client socket
 	# """
 	try:
 		request_code = request[:4]
@@ -184,12 +102,9 @@ def handle_client(sock, tid , addr):
 				print ('Seems client disconnected')
 				break
 			logtcp('recv',tid, byte_data)
-			err_size = check_length(byte_data)
-			if err_size != b'':
-				to_send = err_size
-			else:
-				byte_data = byte_data[9:]   # remove length field
-				to_send , finish = handle_request(byte_data)
+
+			byte_data = byte_data[9:]   # remove length field
+			to_send , finish = handle_request(byte_data)
 			if to_send != '':
 				send_data(sock, tid , to_send)
 			if finish:

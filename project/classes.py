@@ -64,7 +64,7 @@ class Game:
     def __init__(self,addr_arr: list[tuple[str,int]]) -> None:
         self.__deck = CardDeck()
         self.__deck.shuffle()
-        self.__community_cards = [] # The cards everyone can see
+        self.__community_cards: list[Card] = [] # The cards everyone can see
         self.__players: list[Player]= []
         
         pos_count = 1
@@ -92,4 +92,4 @@ class Game:
         self.__player_cards = cards
     
     def calculate_winners(self):
-        pass
+        raise NotImplementedError("Calculate winners not implemented")
