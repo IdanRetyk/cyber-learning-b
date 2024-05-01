@@ -138,10 +138,10 @@ class GUI():
     def ack_window(self):
         ack_root = tk.Tk()
         ack_root.geometry("250x80+400+300")
-        ack_root.title("Acknoledgment Window")
+        ack_root.title("Acknowledgment Window")
         ack_mainframe = tk.Frame(ack_root,background="white")
         ack_mainframe.pack(fill="both",expand=True)
-        ack = ttk.Label(ack_mainframe,text="Action was done succesfuly!",background="white",font=("Brass Mono",10),justify="center")
+        ack = ttk.Label(ack_mainframe,text="Action was done successfully!",background="white",font=("Brass Mono",10),justify="center")
         ack.grid(row=0,column=0)
         
         close = ttk.Button(ack_mainframe,text="Close",command = lambda : ack_root.destroy())
@@ -181,7 +181,7 @@ class GUI():
         self.ver_root.destroy() 
 
     
-    def get_ecnrypion_type(self):
+    def get_encryption_type(self):
         int_value = self.var.get()
         if int_value == 1:
             self.type = "RSA"
@@ -208,7 +208,7 @@ class GUI():
         R2.grid(row=1,column=0)
 
         
-        choose = ttk.Button(choose_mainframe, text="confirm",command=self.get_ecnrypion_type)
+        choose = ttk.Button(choose_mainframe, text="confirm",command=self.get_encryption_type)
         choose.grid(row=3,column=0)
         
         if (error):
