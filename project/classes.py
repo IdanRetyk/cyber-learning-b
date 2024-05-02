@@ -1,6 +1,9 @@
 import random
+import pygame
 from PIL import Image
 
+
+PIC_FOLDER = "/Users/Idan/cyber-learning-b/project/pictures/"
 
 class Card:
     def __init__(self,num: int ,suit: str ) -> None:
@@ -29,10 +32,27 @@ class Card:
     def get_num(self) -> int:
         return self.__num
     
-    def get_picture(self) -> Image.Image:
-        # TODO should display the correct picture.
-        raise NotImplementedError()
+    def get_picture(self) -> pygame.surface.Surface:
+        im = Image.open(PIC_FOLDER + "deck.png")    
+        
+        top = ('S','C','D','H').index(self.__suit) * 59
+        bottom = top + 59
+        
+        if (self.__num) == 1: # Ace
+            left,right = 0,39
+        else:
+            left = 14 - self.__num * 40 - 1
+            right = left + 40
+        
+        im1 = im.crop((left,top,right,bottom))
 
+        if im1.mode != "RGB":
+            im1 = im1.convert("RGB")
+            
+        #TODO check how to display image with correct mode.    
+        
+        im1.show()
+        return pygame.image.fromstring(im1.tobytes(),im1.size,"RGB")
 
 class CardDeck:
     def __init__(self) -> None:
@@ -93,3 +113,8 @@ class Game:
     
     def calculate_winners(self):
         raise NotImplementedError("Calculate winners not implemented")
+
+
+
+if __name__ == "__main__":
+    print("This file should not execute")

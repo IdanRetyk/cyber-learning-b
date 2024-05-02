@@ -1,6 +1,6 @@
 import pygame
 
-PIC_FOLDER = "/Users/Idan/cyber-learning-b/project/pictures/"
+from classes import PIC_FOLDER,Card
 
 
 import pygame
@@ -29,6 +29,11 @@ screen.blit(card_back,(700,160))
 screen.blit(card_back,(720,160))
 screen.blit(card_back,(740,250))
 screen.blit(card_back,(720,250))
+
+
+card = Card(8,'D')
+
+screen.blit(card.get_picture(),(100,100))
 pygame.display.flip()
 
 finish = False
