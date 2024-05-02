@@ -26,6 +26,11 @@ class Card:
         self.__num = num
         self.__suit = suit
 
+    def __repr__(self) -> str:
+        return str(self.__num) + self.__suit
+
+
+
     def get_suit(self) -> str:
         return self.__suit
 
@@ -47,8 +52,11 @@ class Card:
         else:
             left = (14 - self.__num) * 40 - 1
             right = left + 40
-        
-        print((left,top,right,bottom))
+        if self.__num <= 5:
+            left += 1
+            right += 1
+
+
         
         im1 = im.crop((left,top,right,bottom))
 
@@ -97,10 +105,14 @@ class Game:
             pos_count += 1
         
         
-        self.__deal_cards()
+        # self.__deal_cards()
     
-    def __deal_cards(self):
-        pass
+    def deal_cards(self):
+        #TODO this is not the real function. just for testing. 
+        """
+        send every player their hole cards.
+        """
+        return (self.__deck.draw_card(),self.__deck.draw_card())
     
     def show_flop(self):
         for _ in range(3):
