@@ -1,5 +1,5 @@
 import random
-
+from PIL import Image
 
 
 class Card:
@@ -29,7 +29,7 @@ class Card:
     def get_num(self) -> int:
         return self.__num
     
-    def __str__(self) -> str:
+    def get_picture(self) -> Image.Image:
         # TODO should display the correct picture.
         raise NotImplementedError()
 

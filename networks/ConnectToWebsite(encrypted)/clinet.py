@@ -238,7 +238,7 @@ def send_data(sock, bdata):
     e.g. from 'abcd' will send  b'00000004~abcd'
     return: void
     """
-    #encryps data with AES
+    #encrypts data with AES
     #it sends first the iv and then the encrypted data
 
     
@@ -248,7 +248,7 @@ def send_data(sock, bdata):
         
     iv, ciphertext = AES_encrypt(KEY,bdata)
     bytearray_data: bytes = str(len(ciphertext)).zfill(8).encode() + b'~' + ciphertext
-    to_send :bytes = iv + b'|' + bytearray_data
+    to_send :bytes = bytes(iv)+ b'|' + bytearray_data
     sock.send(to_send)
     logtcp('sent', to_send)
 
@@ -271,7 +271,7 @@ def parse_error(data,gui: GUI):
 
     return to_send.encode()
 
-def recive_by_size(sock:socket) -> str:
+def recive_by_size(sock:socket.socket) -> str:
     """recive msg with sockets, using the first 8 bytes as the size of the msg and decrypting it with AES
     the message is in the format of 'iv|size~encrypted_msg'
 
@@ -315,7 +315,7 @@ def recive_by_size(sock:socket) -> str:
 
 
 #RSA
-def AES_key_exchange(sock: socket) -> bytes:
+def AES_key_exchange(sock: socket.socket) -> bytes:
     """
     swaps with server keys for AES using RSA
     first the server sends public key, than clinet sends AES key encrypted using the public key, than server decrypts the AES key. Handshake done
