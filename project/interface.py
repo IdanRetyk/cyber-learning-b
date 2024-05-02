@@ -31,7 +31,7 @@ screen.blit(card_back,(740,250))
 screen.blit(card_back,(720,250))
 
 
-card = Card(8,'D')
+card = Card(1,'D')
 
 screen.blit(card.get_picture(),(100,100))
 pygame.display.flip()

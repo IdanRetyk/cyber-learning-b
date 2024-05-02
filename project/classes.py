@@ -36,23 +36,27 @@ class Card:
         im = Image.open(PIC_FOLDER + "deck.png")    
         
         top = ('S','C','D','H').index(self.__suit) * 59
+        if (self.__suit == 'D'):
+            top += 2
+        if (self.__suit == 'H'):
+            top += 4
         bottom = top + 59
         
         if (self.__num) == 1: # Ace
             left,right = 0,39
         else:
-            left = 14 - self.__num * 40 - 1
+            left = (14 - self.__num) * 40 - 1
             right = left + 40
+        
+        print((left,top,right,bottom))
         
         im1 = im.crop((left,top,right,bottom))
 
-        if im1.mode != "RGB":
-            im1 = im1.convert("RGB")
-            
-        #TODO check how to display image with correct mode.    
-        
-        im1.show()
-        return pygame.image.fromstring(im1.tobytes(),im1.size,"RGB")
+        if im1.mode != "RGBA":
+            im1 = im1.convert("RGBA")
+
+
+        return pygame.image.fromstring(im1.tobytes(),im1.size,"RGBA")
 
 class CardDeck:
     def __init__(self) -> None:
