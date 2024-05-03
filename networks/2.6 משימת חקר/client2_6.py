@@ -59,31 +59,31 @@ def protocol_build_request(from_user):
         return ''
 
 
-def protocol_parse_reply(reply):
-    """
-    parse the server reply and prepare it to user
-    return: answer from server string
-    """
+# def protocol_parse_reply(reply):
+#     """
+#     parse the server reply and prepare it to user
+#     return: answer from server string
+#     """
 
-    to_show = 'Invalid reply from server'
-    try:
-        reply = reply.decode()
-        if '~' in reply:
-            fields = reply.split('~')
-        code = reply[:4]
-        if code == 'TIMR':
-            to_show = 'The Server time is: ' + fields[1]
-        elif code == 'RNDR':
-            to_show = 'Server draw the number: ' +  fields[1]
-        elif code == 'WHOR':
-            to_show = 'Server name is: ' +  fields[1]
-        elif code == 'ERRR':
-            to_show = 'Server return an error: ' + fields[1] + ' ' + fields[2]
-        elif code == 'EXTR':
-            to_show = 'Server acknowledged the exit message';
-    except:
-        print ('Server replay bad format')
-    return to_show
+#     to_show = 'Invalid reply from server'
+#     try:
+#         reply = reply.decode()
+#         if '~' in reply:
+#             fields = reply.split('~')
+#         code = reply[:4]
+#         if code == 'TIMR':
+#             to_show = 'The Server time is: ' + fields[1]
+#         elif code == 'RNDR':
+#             to_show = 'Server draw the number: ' +  fields[1]
+#         elif code == 'WHOR':
+#             to_show = 'Server name is: ' +  fields[1] # type: ignore
+#         elif code == 'ERRR':
+#             to_show = 'Server return an error: ' + fields[1] + ' ' + fields[2]
+#         elif code == 'EXTR':
+#             to_show = 'Server acknowledged the exit message';
+#     except:
+#         print ('Server replay bad format')
+#     return to_show
 
 
 def handle_reply(reply):
@@ -91,7 +91,7 @@ def handle_reply(reply):
     get the tcp upcoming message and show reply information
     return: void
     """
-    to_show = protocol_parse_reply(reply)
+    to_show = "protocol_parse_reply(reply)"
     if to_show != '':
         print('\n==========================================================')
         print (f'  SERVER Reply: {to_show}   |')

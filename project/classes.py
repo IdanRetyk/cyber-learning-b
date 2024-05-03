@@ -1,3 +1,14 @@
+"""This file contains all general classes.
+
+Card - (num,suit)
+CardDeck - (deck)
+Player - (addr,pos)
+Game - (deck,community_cards,players)
+
+"""
+
+
+
 import random
 import pygame
 from PIL import Image
@@ -129,6 +140,12 @@ class Game:
     
     def calculate_winners(self):
         raise NotImplementedError("Calculate winners not implemented")
+
+
+
+
+
+
 
 
 

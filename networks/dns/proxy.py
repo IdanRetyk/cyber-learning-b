@@ -2,7 +2,8 @@
 
 from dns_server import dns_udp_server
 
-from scapy.all import UDP,DNS,DNSQR,IP,sr1,DNSRR
+from scapy.layers.inet import UDP,IP,sr1 #type :ignore
+from scapy.layers.dns import DNS,DNSQR,DNSRR
 
 import re,socket
 

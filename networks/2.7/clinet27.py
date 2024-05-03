@@ -49,7 +49,6 @@ def protocol_parse_reply(reply):
     parse the server reply and prepare it to user
     return: answer from server string
     """
-   
     print("protocol_parse_reply not implemented")
     return str()
 
@@ -117,7 +116,6 @@ def main(ip):
             if byte_data == b'':
                 print ('Seems server disconnected abnormal')
                 break
-           
             
             
             

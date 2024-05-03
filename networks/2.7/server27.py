@@ -1,6 +1,6 @@
-__author__ = 'Yossi'
+__author__ = 'Retyk'
 
-# 2.6  client server October 2021
+
 import socket, random, traceback
 import time, threading, os, datetime
 import pyautogui, shutil
@@ -30,23 +30,6 @@ def send_data(sock,tid,bdata):
 	sock.send(bytearray_data)
 	logtcp('sent',tid, bytearray_data)
 	print("")
-
-
-
-
-
-	
-
-
-
-
-
-
-
-
-    
-
-
 
 
 

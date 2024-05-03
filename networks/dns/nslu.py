@@ -1,4 +1,6 @@
-from scapy.all import UDP,DNS,DNSQR,IP,sr1,DNSRR
+from scapy.layers.inet import UDP,IP,sr1 #type :ignore
+from scapy.layers.dns import DNS,DNSQR,DNSRR
+
 domain = input("Enter addr \n")
 
 
