@@ -46,3 +46,8 @@ def recive_by_size(sock):
         msg += sock.recv(size).decode()
     logtcp('recv',msg)
     return msg
+
+
+
+def sub_tuple(tuple1: tuple[int,int],tuple2:tuple[int,int]) -> tuple[int,...]:
+    return tuple([abs(a-b) for a,b in zip(tuple1,tuple2)])

@@ -2,5 +2,11 @@
     "python.analysis.autoFormatStrings": true,
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
-    "editor.defaultFormatter": "mikoz.black-py"
+    "editor.defaultFormatter": "mikoz.black-py",
+    "dotnet.defaultSolution": "disable",
+    "cSpell.words": [
+        "blit",
+        "MOUSEBUTTONDOWN",
+        "pygame"
+    ]
 }
