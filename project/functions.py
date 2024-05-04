@@ -10,9 +10,9 @@ def logtcp(dir: str,byte_data: bytes,tid = 0 ):
 	return: void
 	"""
 	if dir == 'sent':
-		print(f'{tid} LOG:Sent     >>> {byte_data.decode()}')
+		print(bytes(tid) + b' LOG:Sent     >>> ' + byte_data)
 	else:
-		print(f'{tid} LOG:Received <<< {byte_data.decode()}')
+		print(bytes(tid) + b' LOG:Received  <<<    ' + bytes(byte_data))
 
 
 
@@ -33,19 +33,19 @@ def send_data(sock: socket.socket,bdata: bytes,tid = 0,):
 
 
 
-def recive_by_size(sock: socket.socket) -> str:
+def recive_by_size(sock: socket.socket) -> bytes:
     
-    size = ''
-    while not '~' in size:
-        size += sock.recv(4).decode()
-    parts = size.split('~')
+    size = b''
+    while not b'~' in size:
+        size += sock.recv(4)
+    parts = size.split(b'~')
     size = int(parts[0])
     
     msg = parts[1]
     while len(msg) != size:
         
-        msg += sock.recv(size).decode()
-    logtcp('recv',msg.encode())
+        msg += sock.recv(size)
+    logtcp('recv',msg)
     return msg
 
 

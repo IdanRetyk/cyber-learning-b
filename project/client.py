@@ -1,8 +1,8 @@
-import pygame,socket,traceback
+import pygame,socket,traceback,pickle
 
 from classes import PIC_FOLDER,Card,Game,Player
 from functions import *
-
+from db_server import PLAYER_COUNT
 
 WINDOW_WIDTH = 1024
 WINDOW_HEIGHT = 500
@@ -11,26 +11,23 @@ pygame.init()
 BET_POS: tuple[int,int] = (970,445)
 TO_SEND: bytes = b''
 
+
+
+
 class GUI():
     def __init__(self,ip) -> None:
         size = (WINDOW_WIDTH, WINDOW_HEIGHT)
         self.screen = pygame.display.set_mode(size)
         pygame.display.set_caption("Game")
         
-        
-        
+
         finish = True
 
         self.sock = socket.socket()
 
-        self.game = Game()
-        
-        self.load_images()
-        
-        game_pos = 1
         
         
-        port = 1233
+        port = 5
         try:
             self.sock.connect((ip,port))
             print (f'Connect succeeded {ip}:{port}')
@@ -47,18 +44,23 @@ class GUI():
         
 
         from_server = recive_by_size(self.sock)
-        code,player_remaining = from_server.split('~')
+        code,player_remaining = from_server.split(b'~')
         
-        if code != "HELLO":
+        if code != b"HELLO":
             raise ValueError("Expecting hello, instead received ", code)
-        while(code == "HELLO"):
+        while(code == b"HELLO"):
             print(f"waiting for players, {player_remaining} remaining...")
             from_server = recive_by_size(self.sock)
-            code,player_remaining = from_server.split('~')
+            code,player_remaining = from_server.split(b'~')
         # Handshake complete, ready to start game
         
+        from_server = recive_by_size(self.sock)
+        code,player_pickle= from_server.split(b'~')
+        if code != b"PLYR":
+            raise ValueError("Expecting hello, instead received ", code)
+        self.player: Player = pickle.loads(player_pickle)
         
-        
+        self.load_images()
         pygame.display.flip()
         
         
@@ -93,11 +95,7 @@ class GUI():
         self.screen.blit(card_back,(740,250))
         self.screen.blit(card_back,(720,250))
 
-
-        card1,card2 = self.game.deal_cards()
-
-        card1: Card = card1
-        card2: Card = card2
+        card1, card2 = self.player.get_cards()
 
         self.screen.blit(card1.get_picture(),(340,435))
         self.screen.blit(card2.get_picture(),(355,435))

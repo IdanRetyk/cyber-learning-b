@@ -6,6 +6,7 @@ import socket
 import traceback
 import time
 import threading
+import pickle
 
 from functions import *
 from classes import *
@@ -13,6 +14,9 @@ from classes import *
 all_to_die = False
 PLAYER_ARR: list[Player] = []
 LOCK = threading.Lock()
+PLAYER_COUNT = 2
+GAME = None
+
 
 def protocol_build_reply(request):
 	"""
@@ -53,30 +57,49 @@ def handle_client(sock : socket.socket, tid: int , addr):
 	:return: void
 	"""
 	global all_to_die
+	global PLAYER_ARR
 
 	print(f'New Client number {tid} from {addr}')
-	#server hello
-	from_player: str = recive_by_size(sock)
-	hello,money,name = from_player.split('~')
-	if hello != "HELLO":
+
+	# Server hello
+	from_player: bytes = recive_by_size(sock)
+	hello,money,name = from_player.split(b'~')
+	if hello != b"HELLO":
 		raise ValueError("Wrong command")
 	money = int(money)
-	PLAYER_ARR.append(Player(addr,len(PLAYER_ARR),money,name))
-	send_data(sock,f'HELLO~{5 - len(PLAYER_ARR)}'.encode(),tid)
+	name = name.decode()
+	player_index = len(PLAYER_ARR) - 1 # This variable is the index of the player in the PLAYER_ARR array.
+	with LOCK:
+		PLAYER_ARR.append(Player(addr,len(PLAYER_ARR),money,name))
+	send_data(sock,f'HELLO~{PLAYER_COUNT - len(PLAYER_ARR)}'.encode(),tid)
 
 	count = len(PLAYER_ARR)
-	while len(PLAYER_ARR) != 5:
+	while len(PLAYER_ARR) != PLAYER_COUNT:
 		if count != len(PLAYER_ARR):
 			count = len(PLAYER_ARR)
-			send_data(sock,f'HELLO~{5 - len(PLAYER_ARR)}'.encode(),tid)
+			send_data(sock,f'HELLO~{PLAYER_COUNT - len(PLAYER_ARR)}'.encode(),tid)
 
+	# Handshake complete 
+
+
+	if player_index == 0: # Only one thread should create the object and deal the cards.
+		GAME = Game(PLAYER_ARR)	
+		GAME.deal_cards()
+	
+	player = PLAYER_ARR[player_index]
+	to_send = b'PLYR~' + pickle.dumps(player)
+	send_data(sock,to_send,tid)
+
+ 
+	PLAYER_ARR = []
+ 
 	finish = False
 	while not finish:
 		if all_to_die:
 			print('will close due to main server issue')
 			break
 		try:
-			byte_data = recive_by_size(sock).encode()  
+			byte_data = recive_by_size(sock)
 			if byte_data == b'':
 				print ('Seems client disconnected')
 				break
@@ -113,7 +136,7 @@ def main ():
 	threads = []
 	srv_sock = socket.socket()
 
-	srv_sock.bind(('127.0.0.1', 1233))
+	srv_sock.bind(('127.0.0.1', 1235))
 
 	srv_sock.listen(20)
 
