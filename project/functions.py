@@ -2,21 +2,22 @@
 This file contains all general function, related to networking
 """
 
+import socket
 
-def logtcp(dir: str,byte_data,tid = 0 ):
+def logtcp(dir: str,byte_data: bytes,tid = 0 ):
 	"""
 	log direction, tid and all TCP byte array data
 	return: void
 	"""
 	if dir == 'sent':
-		print(f'{tid} LOG:Sent     >>> {byte_data}')
+		print(f'{tid} LOG:Sent     >>> {byte_data.decode()}')
 	else:
-		print(f'{tid} LOG:Received <<< {byte_data}')
+		print(f'{tid} LOG:Received <<< {byte_data.decode()}')
 
 
 
 
-def send_data(sock,bdata,tid = 0,):
+def send_data(sock: socket.socket,bdata: bytes,tid = 0,):
 	"""
 	send to client byte array data
 	will add 8 bytes message length as first field
@@ -25,14 +26,14 @@ def send_data(sock,bdata,tid = 0,):
 	"""
 	bytearray_data = str(len(bdata)).zfill(8).encode() + b'~' + bdata
 	sock.send(bytearray_data)
-	logtcp('sent',tid, bytearray_data)
+	logtcp('sent',bytearray_data,tid)
 	print("")
 
 
 
 
 
-def recive_by_size(sock):
+def recive_by_size(sock: socket.socket) -> str:
     
     size = ''
     while not '~' in size:
@@ -44,7 +45,7 @@ def recive_by_size(sock):
     while len(msg) != size:
         
         msg += sock.recv(size).decode()
-    logtcp('recv',msg)
+    logtcp('recv',msg.encode())
     return msg
 
 

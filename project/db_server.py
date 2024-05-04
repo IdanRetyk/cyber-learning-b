@@ -8,6 +8,11 @@ import time
 import threading
 
 from functions import *
+from classes import *
+
+all_to_die = False
+PLAYER_ARR: list[Player] = []
+LOCK = threading.Lock()
 
 def protocol_build_reply(request):
 	"""
@@ -16,7 +21,7 @@ def protocol_build_reply(request):
 	Handle client request and prepare the reply info
 	string:return: reply
 	"""
-	
+
 	print("protocol_build_reply not implemnted")
 	return b""
 
@@ -25,7 +30,7 @@ def protocol_build_reply(request):
 
 def handle_request(request):
 	# """
-	# Hadle client request
+	# Handle client request
 	# tuple :return: return message (bytes) to send to client and bool if to close the client socket
 	# """
 	try:
@@ -39,7 +44,7 @@ def handle_request(request):
 	return to_send, False
 
 
-def handle_client(sock, tid , addr):
+def handle_client(sock : socket.socket, tid: int , addr):
 	"""
 	Main client thread loop (in the server),
 	:param sock: client socket
@@ -49,20 +54,35 @@ def handle_client(sock, tid , addr):
 	"""
 	global all_to_die
 
-	finish = False
 	print(f'New Client number {tid} from {addr}')
+	#server hello
+	from_player: str = recive_by_size(sock)
+	hello,money,name = from_player.split('~')
+	if hello != "HELLO":
+		raise ValueError("Wrong command")
+	money = int(money)
+	PLAYER_ARR.append(Player(addr,len(PLAYER_ARR),money,name))
+	send_data(sock,f'HELLO~{5 - len(PLAYER_ARR)}'.encode(),tid)
+
+	count = len(PLAYER_ARR)
+	while len(PLAYER_ARR) != 5:
+		if count != len(PLAYER_ARR):
+			count = len(PLAYER_ARR)
+			send_data(sock,f'HELLO~{5 - len(PLAYER_ARR)}'.encode(),tid)
+
+	finish = False
 	while not finish:
 		if all_to_die:
 			print('will close due to main server issue')
 			break
 		try:
-			byte_data = sock.recv(1000)  # todo improve it to recv by message size
+			byte_data = recive_by_size(sock).encode()  
 			if byte_data == b'':
 				print ('Seems client disconnected')
 				break
 			logtcp('recv', byte_data,tid)
 
-			byte_data = byte_data[9:]   # remove length field
+			byte_data = byte_data[9:]   # Remove length field
 			to_send , finish = handle_request(byte_data)
 			if to_send != '':
 				send_data(sock, to_send,tid)

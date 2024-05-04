@@ -1,0 +1,8 @@
+
+Handshake:
+
+client sends client hello. (b'HELLO~<money>~<name>')
+server sends server hello, with amount of players
+server waits for enough players, than sends pickled player object, with the correct data.
+
+than game starts.

@@ -6,7 +6,9 @@
     "dotnet.defaultSolution": "disable",
     "cSpell.words": [
         "blit",
+        "Idan",
         "MOUSEBUTTONDOWN",
-        "pygame"
+        "pygame",
+        "recive"
     ]
 }
