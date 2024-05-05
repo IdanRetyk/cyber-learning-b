@@ -27,7 +27,7 @@ class GUI():
 
         
         
-        port = 5
+        port = 1235
         try:
             self.sock.connect((ip,port))
             print (f'Connect succeeded {ip}:{port}')
