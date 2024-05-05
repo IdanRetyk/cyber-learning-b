@@ -4,20 +4,20 @@ This file contains all general function, related to networking
 
 import socket
 
-def logtcp(dir: str,byte_data: bytes,tid = 0 ):
+def logtcp(dir: str,byte_data: bytes,tid : str = "" ):
 	"""
 	log direction, tid and all TCP byte array data
 	return: void
 	"""
 	if dir == 'sent':
-		print(bytes(tid) + b' LOG:Sent     >>> ' + byte_data)
+		print(tid.encode() + b' LOG:Sent     >>> ' + byte_data)
 	else:
-		print(bytes(tid) + b' LOG:Received  <<<    ' + bytes(byte_data))
+		print(tid.encode() + b' LOG:Received  <<<    ' + bytes(byte_data))
 
 
 
 
-def send_data(sock: socket.socket,bdata: bytes,tid = 0,):
+def send_data(sock: socket.socket,bdata: bytes,addr,tid: str = "0"):
 	"""
 	send to client byte array data
 	will add 8 bytes message length as first field
@@ -25,7 +25,7 @@ def send_data(sock: socket.socket,bdata: bytes,tid = 0,):
 	return: void
 	"""
 	bytearray_data = str(len(bdata)).zfill(8).encode() + b'~' + bdata
-	sock.send(bytearray_data)
+	sock.sendto(bytearray_data,addr)
 	logtcp('sent',bytearray_data,tid)
 	print("")
 
@@ -33,7 +33,7 @@ def send_data(sock: socket.socket,bdata: bytes,tid = 0,):
 
 
 
-def recive_by_size(sock: socket.socket) -> bytes:
+def recive_by_size(sock: socket.socket) -> tuple[bytes,tuple[str,int] | None]:
     
     size = b''
     while not b'~' in size:
@@ -42,11 +42,12 @@ def recive_by_size(sock: socket.socket) -> bytes:
     size = int(parts[0])
     
     msg = parts[1]
+    addr = None
     while len(msg) != size:
-        
-        msg += sock.recv(size)
+        d,addr = sock.recvfrom(size)
+        msg += d
     logtcp('recv',msg)
-    return msg
+    return msg,addr
 
 
 

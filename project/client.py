@@ -23,11 +23,11 @@ class GUI():
 
         finish = True
 
-        self.sock = socket.socket()
+        self.sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
         
-        
         port = 1235
+        self.ADDR = (ip,port)
         try:
             self.sock.connect((ip,port))
             print (f'Connect succeeded {ip}:{port}')
@@ -40,21 +40,21 @@ class GUI():
         #TODO money,name in gui.
         money = 100
         name = "Idan"
-        send_data(self.sock,f"HELLO~{money}~{name}".encode())
+        send_data(self.sock,f"HELLO~{money}~{name}".encode(),(ip,port))
         
 
-        from_server = recive_by_size(self.sock)
+        from_server,a = recive_by_size(self.sock)
         code,player_remaining = from_server.split(b'~')
         
         if code != b"HELLO":
             raise ValueError("Expecting hello, instead received ", code)
         while(code == b"HELLO"):
             print(f"waiting for players, {player_remaining} remaining...")
-            from_server = recive_by_size(self.sock)
+            from_server,a = recive_by_size(self.sock)
             code,player_remaining = from_server.split(b'~')
         # Handshake complete, ready to start game
         
-        from_server = recive_by_size(self.sock)
+        from_server,a = recive_by_size(self.sock)
         code,player_pickle= from_server.split(b'~')
         if code != b"PLYR":
             raise ValueError("Expecting hello, instead received ", code)
@@ -113,7 +113,7 @@ class GUI():
         amount = 0
         
         to_send = b'MOVE~BET~' + str(amount).encode()
-        send_data(self.sock,to_send)
+        send_data(self.sock,to_send,self.ADDR)
         print("BET")
         #TODO implement this
 
