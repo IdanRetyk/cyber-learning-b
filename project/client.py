@@ -46,11 +46,14 @@ class GUI():
         while(code == b"HELLO"):
             print(f"waiting for players, {player_remaining} remaining...")
             from_server,a = udp_recv(self.sock)
-            code,player_remaining = from_server.split(b'~')# type:ignore
+            if from_server is not None:
+                code,player_remaining = from_server.split(b'~')# type:ignore
         # Handshake complete, ready to start game
+
+        # When getting to this point, the message following the handshake is already sent from the server, 
+        # and is stored in player_remaining var
+        player_pickle = player_remaining
         
-        from_server,a = udp_recv(self.sock)
-        code,player_pickle= from_server.split(b'~')# type:ignore
         if code != b"PLYR":
             raise ValueError("Expecting hello, instead received ", code)
         self.player: Player = pickle.loads(player_pickle)

@@ -15,8 +15,10 @@ from classes import *
 all_to_die = False
 
 LOCK = threading.Lock()
-PLAYER_COUNT = 2
+PLAYER_COUNT = 3
 GAME = None
+OPEN_NEW_GAME: bool = True # When this var is true, any new client that connects will start a new game
+                            #if its false, new client will be send to an already existing waiting room
 
 
 def protocol_build_reply(request):
@@ -66,32 +68,36 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
     # At this point the main game loop will start and the game is on.
 
     global all_to_die
+    global OPEN_NEW_GAME
 
     print(f"New Client number {tid} from {addr}")
 
+    OPEN_NEW_GAME = False
+    
+    
     code, money, name = data.split(b"~")
     pos = 1
     player_arr: list[Player] = [Player(addr, 1, int(money), name.decode())]
-    from_player = data
+    send_data(sock,b"HELLO~" + str(PLAYER_COUNT - 1).encode(),addr,tid)
     
     # Server waiting for new players. For each player joining broadcast new server hello with current amount of Players.
     while len(player_arr) != PLAYER_COUNT:
-        if code == b"HELLO" and pos != PLAYER_COUNT and from_player is not None: 
-            pos += 1
-            player_arr.append(Player(addr, pos, money, name))  # type:ignore
-            to_broadcast = b"HELLO~" + bytes(len(player_arr))
-            broadcast(sock, player_arr, to_broadcast, tid)
         from_player, addr = udp_recv(sock)
         if from_player is not None:
             code, money, name = from_player.split(b"~")  # type:ignore
+        if code == b"HELLO" and pos != PLAYER_COUNT and from_player is not None: 
+            pos += 1
+            player_arr.append(Player(addr, pos, money, name))  # type:ignore
+            to_broadcast = b"HELLO~" + str(PLAYER_COUNT - len(player_arr)).encode()
+            broadcast(sock, player_arr, to_broadcast, tid)
 
-    # Handshake complete
+    OPEN_NEW_GAME = True
+    print("HANDSHAKE COMPLETE")# Handshake complete
+    
     GAME = Game(player_arr)
     GAME.deal_cards()
 
-    player = player_arr[pos - 1]
-    to_send = b"PLYR~" + pickle.dumps(player)
-    send_data(sock, to_send, tid)
+    
 
     # TODO implement main game loop
     # finish = False
@@ -143,7 +149,7 @@ def main():
     while True:
         print("\nMain thread: before accepting ...")
         data = None
-        while data is None:
+        while data is None and OPEN_NEW_GAME:
             data, addr = udp_recv(srv_sock)
         t = threading.Thread(target=handle_game, args=(srv_sock, data, str(i), addr))  # type: ignore
         t.start()
