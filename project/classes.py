@@ -162,7 +162,7 @@ class Game:
         
         
         # self.__deal_cards()
-    
+
     def deal_cards(self):
         """
         for every player in players, deal him to cards.

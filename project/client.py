@@ -28,34 +28,29 @@ class GUI():
         
         port = 1235
         self.ADDR = (ip,port)
-        try:
-            self.sock.connect((ip,port))
-            print (f'Connect succeeded {ip}:{port}')
-            finish = False
-        except:
-            print(f'Error while trying to connect.  Check ip or port -- {ip}:{port}')
         
         
         # Client Hello
         #TODO money,name in gui.
         money = 100
         name = "Idan"
-        send_data(self.sock,f"HELLO~{money}~{name}".encode(),(ip,port))
+        from_server = None
+        while from_server is None:
+            send_data(self.sock,f"HELLO~{money}~{name}".encode(),(ip,port))
+            from_server,a = udp_recv(self.sock)
         
-
-        from_server,a = recive_by_size(self.sock)
-        code,player_remaining = from_server.split(b'~')
+        code,player_remaining = from_server.split(b'~') # type:ignore
         
         if code != b"HELLO":
             raise ValueError("Expecting hello, instead received ", code)
         while(code == b"HELLO"):
             print(f"waiting for players, {player_remaining} remaining...")
-            from_server,a = recive_by_size(self.sock)
-            code,player_remaining = from_server.split(b'~')
+            from_server,a = udp_recv(self.sock)
+            code,player_remaining = from_server.split(b'~')# type:ignore
         # Handshake complete, ready to start game
         
-        from_server,a = recive_by_size(self.sock)
-        code,player_pickle= from_server.split(b'~')
+        from_server,a = udp_recv(self.sock)
+        code,player_pickle= from_server.split(b'~')# type:ignore
         if code != b"PLYR":
             raise ValueError("Expecting hello, instead received ", code)
         self.player: Player = pickle.loads(player_pickle)
