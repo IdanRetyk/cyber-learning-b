@@ -8,24 +8,24 @@ def GetAllNLetterWord(n):
     return [word for word in words if len(word) == n]
 
 def IsMostlyDecrypted(chiper_word):
-    global dict
+    global dic
     count = 0
     for ch in chiper_word.lower():
         if ch.isalpha():
-            if dict[ch] != 0:
+            if dic[ch] != 0:
                 count += 1
     return count + 1 == len(chiper_word)
 
 
 def DecryptWord(word):
-    global dict
-    dyct_word = ""
+    global dic
+    dyct_word = dict()
     for ch in word:
         ch = ch.lower()
-        if dict[ch] != 0:
-            dyct_word += dict[ch]
+        if dic[ch] != 0:
+            dyct_word += dic[ch] #type:ignore
         else:
-            dyct_word += f"_{ch}_"
+            dyct_word += f"_{ch}_"#type:ignore
     
     return dyct_word
 
@@ -60,8 +60,8 @@ def PrintWordsFromLetter(letter):
 
 
 def PrintRemainingLetters():
-    global dict
-    print([k for k,v in dict.items() if v == 0])
+    global dic
+    print([k for k,v in dic.items() if v == 0])
 
 cipher = """
 'Eilj l wtcsptr yaamsxu!' rlso Lmswa; 'S ntrj fa ritjjsxu tb mska l
@@ -107,14 +107,14 @@ with open("ex4_dictionary.txt", 'r') as file:
     dict_words = file.read().split()
 
 #solution:
-dict = {chr(x):0 for x in range(ord('a'),ord('z') + 1)}
-dict['s'] = 'i' #only possible option for S to be a valid word
-dict['l'] = 'a'
+dic: dict[str,str] = {chr(x):0 for x in range(ord('a'),ord('z') + 1)} # type:ignore
+dic['s'] = 'i' #only possible option for S to be a valid word
+dic['l'] = 'a' 
 #opx'j = don't
-dict['o'] = 'd'
-dict['p'] = 'o'
-dict['x'] = 'n'
-dict['j'] = 't'
+dic['o'] = 'd'
+dic['p'] = 'o'
+dic['x'] = 'n'
+dic['j'] = 't'
 
 
 words = re.split(r"\W", cipher)
@@ -137,26 +137,26 @@ threeLetterWordsfrequency = {k:v for k,v in sorted(frequency.items(), key = lamb
 #ria ,jia, lxo, elr
 
 #j -> t so jia => the
-dict['i'] = 'h' 
-dict['a'] = 'e'
+dic['i'] = 'h' 
+dic['a'] = 'e'
 
-dict['r'] = 's' #ria -> _he so r -> s
+dic['r'] = 's' #ria -> _he so r -> s
 
 #l -> a so lxo -> and
-dict['x'] = 'n'
-dict['o'] = 'd'
+dic['x'] = 'n'
+dic['o'] = 'd'
 
 #PrintAll()
-dict['c'] = 'r'
+dic['c'] = 'r'
 
 #print(LocateInDictionary("ehe")) #h is k,r,v,w,y
 
 #PrintAll()
-dict ['u'] = 'g'
-dict['w'] = 'c'
+dic ['u'] = 'g'
+dic['w'] = 'c'
 #PrintAll()
-dict['e'] = 'w'
-dict ['b'] = 'p'
+dic['e'] = 'w'
+dic ['b'] = 'p'
 
 letterFreq = {chr(x):0 for x in range(ord('a'),ord('z') + 1)}
 for word in words:
@@ -167,48 +167,48 @@ for word in words:
 letterFreq = {k:v for k,v in sorted(letterFreq.items(), key = lambda x:x[1],reverse=True)}
 print(letterFreq)
 
-dict['a'] = 'e'
-dict['p'] = 'o'
+dic['a'] = 'e'
+dic['p'] = 'o'
 
 
 #PrintWordsFromLetter('d')
-dict['d'] = 'q'
-dict ['t'] = 'u'
+dic['d'] = 'q'
+dic ['t'] = 'u'
 
 #PrintWordsFromLetter('z')
 
-dict['z'] = 'z'
+dic['z'] = 'z'
 
 #PrintWordsFromLetter('q')
-dict['q'] = 'v'
+dic['q'] = 'v'
 
 
 
 
 #we found a pattern that looks like .eauti.u... that applyes only to beauitflly so
-dict['f'] = 'b'
-dict ['y'] = 'f'
-dict['m'] = 'l'
-dict['h'] = 'y'
+dic['f'] = 'b'
+dic ['y'] = 'f'
+dic['m'] = 'l'
+dic['h'] = 'y'
 
 
-dict['v'] = ' ' #v doesn't appear at all
+dic['v'] = ' ' #v doesn't appear at all
 
 #PrintWordsFromLetter('n')
-dict['n'] = 'm'
+dic['n'] = 'm'
 
 #PrintRemainingLetters()
 
 #PrintWordsFromLetter('g')
-dict['g'] = 'x'
+dic['g'] = 'x'
 
 #PrintWordsFromLetter('k')
-dict['k'] = 'k'
+dic['k'] = 'k'
 
 with open("ex4_ansewr.txt", 'w') as file:
     for ch in cipher:
         if ch.isupper():
-            file.write(dict.get(ch.lower(),ch).upper())
+            file.write(dic.get(ch.lower(),ch).upper())
         else:
-            file.write(dict.get(ch,ch))
+            file.write(dic.get(ch,ch))
         

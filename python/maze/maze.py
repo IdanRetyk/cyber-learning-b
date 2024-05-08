@@ -20,6 +20,7 @@ class Point:
     def GetRight(self):
         return Point(self.x + 1, self.y)
     
+    @staticmethod
     def GetDirection(prev,curr):
         if (prev.x == curr.x):
             if (prev.y + 1 == curr.y):
@@ -115,7 +116,6 @@ def draw_solution(link):
             else:
                 pixels[i, j] = (255,255,255)  
     
-             
     key = Point(639,0)
 
     #draws path 
