@@ -132,7 +132,7 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
 
 
 def main():
-    global all_to_die
+    global all_to_die,OPEN_NEW_GAME
     """
     main server loop
     1. accept tcp connection
@@ -147,17 +147,19 @@ def main():
 
     i = 1
     while True:
-        print("\nMain thread: before accepting ...")
         data = None
-        while data is None and OPEN_NEW_GAME:
-            data, addr = udp_recv(srv_sock)
-        t = threading.Thread(target=handle_game, args=(srv_sock, data, str(i), addr))  # type: ignore
-        t.start()
-        i += 1
-        threads.append(t)
-        if i > 100000000:  # for tests change it to 4
-            print("\nMain thread: going down for maintenance")
-            break
+        if OPEN_NEW_GAME:
+            print("\nMain thread: before accepting ...")
+            while data is None:
+                data, addr = udp_recv(srv_sock)
+            OPEN_NEW_GAME = False
+            t = threading.Thread(target=handle_game, args=(srv_sock, data, str(i), addr))  # type: ignore
+            t.start()
+            i += 1
+            threads.append(t)
+            if i > 100000000:  # for tests change it to 4
+                print("\nMain thread: going down for maintenance")
+                break
 
     all_to_die = True
     print("Main thread: waiting to all clints to die")
