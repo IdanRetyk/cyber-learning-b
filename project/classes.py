@@ -104,12 +104,12 @@ class Player:
                 position: int,
                 money: int,
                 name: str = "",
-                cards: tuple[Card,Card] | None = None
+                hand: tuple[Card,Card] | None = None
                 ) -> None:
 
         self.__addr = addr
         self.__pos = position
-        self.__cards: tuple[Card,Card] | None = cards
+        self.__hand: tuple[Card,Card] | None = hand
         self.__money = money
         self.__name = name
     
@@ -131,13 +131,13 @@ class Player:
     def get_name(self) -> str:
         return self.__name
     
-    def set_cards(self, cards: tuple[Card,Card]):
-        self.__cards = cards
+    def set_hand(self, cards: tuple[Card,Card]):
+        self.__hand = cards
     
-    def get_cards(self) -> tuple[Card,Card]:
-        if self.__cards is None:
+    def get_hand(self) -> tuple[Card,Card]:
+        if self.__hand is None:
             raise ValueError("Player cards are None")
-        return self.__cards
+        return self.__hand
 
     def set_money(self, money: int):
         self.__money = money
@@ -151,24 +151,21 @@ class Player:
     
 
 class Game:
-    def __init__(self,player_arr :list[Player] = []) -> None:
+    def __init__(self,player_arr :list[Player] = list()) -> None:
         self.__deck = CardDeck()
         self.__deck.shuffle()
-        self.__community_cards: list[Card] = [] # The cards everyone can see
+        self.__community_cards: list[Card] = list() # The cards everyone can see
         self.__players: list[Player]= player_arr
         self.__pot : int = 0
-                
-        
-        
-        
-        # self.__deal_cards()
 
-    def deal_cards(self):
+        self.__deal_cards()
+
+    def __deal_cards(self):
         """
         for every player in players, deal him to cards.
         """
         for player in self.__players:
-            player.set_cards((self.__deck.draw_card(),self.__deck.draw_card()))
+            player.set_hand((self.__deck.draw_card(),self.__deck.draw_card()))
     
     
     def add_to_pot(self,amount : int):
