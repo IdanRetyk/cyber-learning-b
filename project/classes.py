@@ -6,15 +6,27 @@ Player - (addr,pos)
 Game - (deck,community_cards,players)
 
 """
-
-
-
+import pathlib
 import random
 import pygame
 from PIL import Image
+from platform import system
+
+#check if run on windows or mac
 
 
-PIC_FOLDER = "/Users/Idan/cyber-learning-b/project/pictures/"
+
+project_folder = str(pathlib.Path(__file__).parent.resolve())
+sys = system()
+if sys == "Darwin":
+    PIC_FOLDER = project_folder + "/pictures/"
+elif sys == "Windows":
+    PIC_FOLDER = project_folder + r"\pictures" + "\\"
+else:
+    PIC_FOLDER = ""
+    raise ValueError()
+
+
 
 class Card:
     def __init__(self,num: int ,suit: str ) -> None:
@@ -151,15 +163,25 @@ class Player:
     
 
 class Game:
-    def __init__(self,player_arr :list[Player] = list()) -> None:
+    def __init__(self,player_arr :list[Player] | None = None) -> None:
+        if player_arr is None:
+            player_arr = []
         self.__deck = CardDeck()
         self.__deck.shuffle()
         self.__community_cards: list[Card] = list() # The cards everyone can see
-        self.__players: list[Player]= player_arr
-        self.__pot : int = 0
+        self.__players: list[Player] = player_arr
+        self.__pot: int = 0
 
         self.__deal_cards()
+    
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state['_Game__deck']  # Remove the deck from the state
+        return state
 
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+    
     def __deal_cards(self):
         """
         for every player in players, deal him to cards.
@@ -168,7 +190,13 @@ class Game:
             player.set_hand((self.__deck.draw_card(),self.__deck.draw_card()))
     
     
-    def add_to_pot(self,amount : int):
+    def get_players(self) -> list[Player]:
+        return self.__players
+
+    def get_community_cards(self):
+        return self.__community_cards
+    
+    def change_pot(self,amount: int):
         self.__pot += amount
         
     def get_pot(self) -> int:

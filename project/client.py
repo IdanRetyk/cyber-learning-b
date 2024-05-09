@@ -1,8 +1,9 @@
 import pygame,socket,traceback,pickle
+from base64 import b64decode
 
 from classes import PIC_FOLDER,Card,Game,Player
 from functions import *
-from db_server import PLAYER_COUNT
+from game_server import PLAYER_COUNT
 
 WINDOW_WIDTH = 1024
 WINDOW_HEIGHT = 500
@@ -29,35 +30,21 @@ class GUI():
         port = 1235
         self.ADDR = (ip,port)
         
+        pickleld_game,player_index = self.client_hello()
         
-        # Client Hello
-        #TODO money,name in gui.
-        money = 100
-        name = "Idan"
-        from_server = None
-        while from_server is None:
-            send_data(self.sock,f"HELLO~{money}~{name}".encode(),(ip,port))
-            from_server,a = udp_recv(self.sock)
+        # When getting to this point, the last message sent is "game" message, .
+        self.game : Game = pickle.loads(b64decode(pickleld_game))
+        self.player = self.game.get_players()[int(player_index)]
         
-        code,player_remaining = from_server.split(b'~') # type:ignore
+        d,_ = udp_recv(self.sock)
+        while d != b'ACK':
+            send_data(self.sock,b'ACK',self.ADDR)
+            d,_ = udp_recv(self.sock)
         
-        if code != b"HELLO":
-            raise ValueError("Expecting hello, instead received ", code)
-        while(code == b"HELLO"):
-            print(f"waiting for players, {player_remaining} remaining...")
-            from_server,a = udp_recv(self.sock)
-            if from_server is not None:
-                code,player_remaining = from_server.split(b'~')# type:ignore
+        
         # Handshake complete, ready to start game
 
-        # When getting to this point, the message following the handshake is already sent from the server, 
-        # and is stored in player_remaining var
-        player_pickle = player_remaining
-        
-        if code != b"PLYR":
-            raise ValueError("Expecting hello, instead received ", code)
-        self.player: Player = pickle.loads(player_pickle)
-        
+
         self.load_images()
         pygame.display.flip()
         
@@ -77,6 +64,37 @@ class GUI():
         pygame.quit()
         self.sock.close()
     
+    def client_hello(self) ->tuple[bytes,bytes]:
+        # Client Hello
+        #TODO money,name in gui.
+        money = 100
+        name = "Idan"
+        from_server = None
+        while from_server is None:
+            send_data(self.sock,f"HELLO~{money}~{name}".encode(),self.ADDR)
+            from_server,a = udp_recv(self.sock)
+        
+        code,player_remaining = from_server.split(b'~') # type:ignore
+        
+        if code != b"HELLO":
+            raise ValueError("Expecting hello, instead received ", code)
+        while(code == b"HELLO"):
+            print(f"waiting for players, {player_remaining} remaining...")
+            from_server,a = udp_recv(self.sock)
+            if from_server is not None:
+                fields = from_server.split(b'~')# type:ignore
+                code = fields[0]
+                #according to code unpack the rest of the msg
+                if code == b"HELLO":
+                    player_remaining = fields[1]
+                elif code == B"GAME":
+                    _,pickled_game,player_index = fields
+                else:
+                    raise ValueError("Don't know this code. msg -", from_server)
+        
+        return pickled_game,player_index # type:ignore
+    
+    
     def load_images(self):
         self.screen.fill((255,255,255))
 
@@ -93,7 +111,7 @@ class GUI():
         self.screen.blit(card_back,(740,250))
         self.screen.blit(card_back,(720,250))
 
-        card1, card2 = self.player.get_cards()
+        card1, card2 = self.player.get_hand()
 
         self.screen.blit(card1.get_picture(),(340,435))
         self.screen.blit(card2.get_picture(),(355,435))

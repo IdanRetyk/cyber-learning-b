@@ -8,6 +8,7 @@ import traceback
 import time
 import threading
 import pickle
+from base64 import b64encode
 
 from functions import *
 from classes import *
@@ -15,8 +16,7 @@ from classes import *
 all_to_die = False
 
 LOCK = threading.Lock()
-PLAYER_COUNT = 3
-GAME = None
+PLAYER_COUNT = 2
 OPEN_NEW_GAME: bool = True # When this var is true, any new client that connects will start a new game
                             #if its false, new client will be send to an already existing waiting room
 
@@ -78,13 +78,26 @@ def waiting_room(sock: socket.socket, data: bytes,addr,tid: str) -> Game:
             to_broadcast = b"HELLO~" + str(PLAYER_COUNT - len(player_arr)).encode()
             broadcast(sock, player_arr, to_broadcast, tid)
     
-    print("HANDSHAKE COMPLETE")# Handshake complete
+    print("Waiting room full")# Waiting room full
     return Game(player_arr)
 
 
 def broadcast(sock: socket.socket, player_arr: list[Player], data: bytes, tid: str):
     for player in player_arr:
         send_data(sock, data, player.get_addr(), tid)
+
+
+def index_address(player_arr: list[Player],addr) -> int:
+    """recv player_arr and return the index at which the player has the given address
+
+    Args:
+        player_arr (_type_): _description_
+    """
+    
+    for i in range(len(player_arr)):
+        if player_arr[i].get_addr() == addr:
+            return i
+    raise ValueError("Value not found")
 
 
 def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
@@ -105,12 +118,27 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
 
     print(f"New Client number {tid} from {addr}")
 
-    GAME = waiting_room(sock,data,addr,tid)
-    OPEN_NEW_GAME = True
-
+    game = waiting_room(sock,data,addr,tid)
 
     
+    bytes_game: bytes = b64encode(pickle.dumps(game))
+    p_arr = game.get_players()
+    
+    # Send each player the game object, with their index in the player array
+    recv_arr: list[bool] = [False] * PLAYER_COUNT
+    while False in recv_arr: # Until everyclient sent ack
+        for i in range(PLAYER_COUNT):
+            if not recv_arr[i]:
+                p = p_arr[i]
+                to_send = b'GAME~' + bytes_game +b'~'+ str(p_arr.index(p)).encode()
+                send_data(sock,to_send,p.get_addr(),tid)
+                from_client,addr = udp_recv(sock)
+                if from_client == b'ACK':
+                    recv_arr[index_address(p_arr,addr)] = True
+                    send_data(sock,b'ACK',addr,tid)
 
+    print("HANDSHAKE complete")
+    OPEN_NEW_GAME = True
     # TODO implement main game loop
     # finish = False
     # while not finish:
