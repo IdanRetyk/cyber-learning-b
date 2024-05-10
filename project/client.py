@@ -10,7 +10,8 @@ WINDOW_HEIGHT = 500
 pygame.init()
 
 BET_POS: tuple[int,int] = (970,445)
-TO_SEND: bytes = b''
+CHECK_POS: tuple[int,int] = (970,345)
+X_POS :tuple[int,int] = (870,445)
 
 
 
@@ -141,6 +142,20 @@ class GUI():
 
         impact = pygame.font.SysFont('IMPACT', 30)
         self.screen.blit(impact.render('BET', False, (110, 82, 35)), (950, 427))
+        
+        
+        # X button        
+        pygame.draw.circle(self.screen,(255,0,0),X_POS,40)
+
+        impact = pygame.font.SysFont('Verdana', 50)
+        self.screen.blit(impact.render('X', False, (128, 0, 0)), (852,415))
+        
+        
+        # Check button
+        pygame.draw.circle(self.screen,(50,50,255),CHECK_POS,40)
+
+        impact = pygame.font.SysFont('IMPACT', 28)
+        self.screen.blit(impact.render('CHECK', False, (100, 110, 255)), (931,327))
     
     
     def show_bet_menu(self):

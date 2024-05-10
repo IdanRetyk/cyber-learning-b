@@ -16,7 +16,7 @@ from classes import *
 all_to_die = False
 
 LOCK = threading.Lock()
-PLAYER_COUNT = 2
+PLAYER_COUNT = 1
 OPEN_NEW_GAME: bool = True # When this var is true, any new client that connects will start a new game
                             #if its false, new client will be send to an already existing waiting room
 
