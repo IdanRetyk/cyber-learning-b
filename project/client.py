@@ -17,12 +17,10 @@ TO_SEND: bytes = b''
 
 class GUI():
     def __init__(self,ip) -> None:
-        size = (WINDOW_WIDTH, WINDOW_HEIGHT)
-        self.screen = pygame.display.set_mode(size)
-        pygame.display.set_caption("Game")
+
         
 
-        finish = True
+        finish = False
 
         self.sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
@@ -31,6 +29,8 @@ class GUI():
         self.ADDR = (ip,port)
         
         pickleld_game,player_index = self.client_hello()
+        
+        self.index = int(player_index) # self.index is the player index within self.game.get_players()
         
         # When getting to this point, the last message sent is "game" message, .
         self.game : Game = pickle.loads(b64decode(pickleld_game))
@@ -44,7 +44,11 @@ class GUI():
         
         # Handshake complete, ready to start game
 
-
+        size = (WINDOW_WIDTH, WINDOW_HEIGHT)
+        self.screen = pygame.display.set_mode(size)
+        pygame.display.set_caption("Game")
+        
+        
         self.load_images()
         pygame.display.flip()
         
@@ -97,7 +101,8 @@ class GUI():
     
     def load_images(self):
         self.screen.fill((255,255,255))
-
+        
+        # back ground and other player's cards (hidden)
         b_bg = pygame.image.load(PIC_FOLDER + 'table_bg.JPG')
         card_back = pygame.image.load(PIC_FOLDER + 'card_back.png')
 
@@ -111,17 +116,31 @@ class GUI():
         self.screen.blit(card_back,(740,250))
         self.screen.blit(card_back,(720,250))
 
+        # Show my cards
         card1, card2 = self.player.get_hand()
 
         self.screen.blit(card1.get_picture(),(340,435))
         self.screen.blit(card2.get_picture(),(355,435))
+        
+        pygame.font.init()
+        
+        # Other players' names, and money
+        # TODO this works only for two players rn
+        ariel = pygame.font.SysFont("Ariel",22)
+        for i in range(self.index):
+            self.screen.blit(ariel.render(self.game.get_players()[i].get_name(),False,(255,255,255)),(193,392))
+            self.screen.blit(ariel.render(str(self.game.get_players()[i].get_money()) + '$',False,(255,255,255)),(273,302))
+        for i in range(self.index + 1, len(self.game.get_players())):
+            self.screen.blit(ariel.render(self.game.get_players()[i].get_name(),False,(255,255,255)),(193,392))
+            self.screen.blit(ariel.render(str(self.game.get_players()[i].get_money()) + '$',False,(255,255,255)),(273,302))
+        
+        
+        # Bet button        
         pygame.draw.circle(self.screen,(255,215,0),BET_POS,40)
         pygame.draw.circle(self.screen, (240, 176, 0),BET_POS,33,5)
 
-
-        pygame.font.init()
-        my_font = pygame.font.SysFont('IMPACT', 30)
-        self.screen.blit(my_font.render('BET', False, (110, 82, 35)), (950, 427))
+        impact = pygame.font.SysFont('IMPACT', 30)
+        self.screen.blit(impact.render('BET', False, (110, 82, 35)), (950, 427))
     
     
     def show_bet_menu(self):
