@@ -82,22 +82,9 @@ def waiting_room(sock: socket.socket, data: bytes,addr,tid: str) -> Game:
     return Game(player_arr)
 
 
-def broadcast(sock: socket.socket, player_arr: list[Player], data: bytes, tid: str):
-    for player in player_arr:
-        send_data(sock, data, player.get_addr(), tid)
 
 
-def index_address(player_arr: list[Player],addr) -> int:
-    """recv player_arr and return the index at which the player has the given address
 
-    Args:
-        player_arr (_type_): _description_
-    """
-    
-    for i in range(len(player_arr)):
-        if player_arr[i].get_addr() == addr:
-            return i
-    raise ValueError("Value not found")
 
 
 def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
@@ -132,8 +119,8 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
                 p = p_arr[i]
                 to_send = b'GAME~' + bytes_game +b'~'+ str(p_arr.index(p)).encode()
                 send_data(sock,to_send,p.get_addr(),tid)
-                from_client,addr = udp_recv(sock)
-                if from_client == b'ACK':
+                from_client,addr = udp_recv(sock,"ACK")
+                if from_client is not None:
                     recv_arr[index_address(p_arr,addr)] = True
                     send_data(sock,b'ACK',addr,tid)
 
@@ -191,7 +178,7 @@ def main():
         if OPEN_NEW_GAME:
             print("\nMain thread: before accepting ...")
             while data is None:
-                data, addr = udp_recv(srv_sock)
+                data, addr = udp_recv(srv_sock,"HELLO")
             OPEN_NEW_GAME = False
             t = threading.Thread(target=handle_game, args=(srv_sock, data, str(i), addr))  # type: ignore
             t.start()
