@@ -125,7 +125,9 @@ class Player:
         self.__hand: tuple[Card,Card] | None = hand
         self.__money = money
         self.__name = name
-    
+        self.__folded = False
+        
+        
     def __repr__(self) -> str:
         return f"addr - {self.__addr}, pos - { self.__pos}, {type(self.__money) =}"
     
@@ -166,10 +168,10 @@ class Player:
         self.__money += amount
 
     def fold(self):
-        self.folded = True
+        self.__folded = True
     
     def is_playing(self):
-        return not self.folded
+        return not self.__folded
     
     
 class Game:
@@ -182,7 +184,8 @@ class Game:
         self.__players: list[Player] = player_arr
         self.__pot: int = 0
         self.__small_blind,self.__big_blind = blinds
-
+        self.__bet_size: int = 0
+        
         self.__deal_cards()
     
     def __getstate__(self):
@@ -204,6 +207,16 @@ class Game:
     def does_player_exist(self,addr):
         return addr in self.get_addresses_list()
     
+    
+    def players_in_game(self) -> int:
+        return len(list(filter(Player.is_playing,self.__players)))
+    
+    
+    def set_bet_size(self,size):
+        self.__bet_size = size
+        
+    def get_bet_size(self) -> int:
+        return self.__bet_size
     
     def get_players(self) -> list[Player]:
         return self.__players
@@ -232,7 +245,7 @@ class Game:
         self.__community_cards.append(self.__deck.draw_card())
     
     def calculate_winners(self):
-        raise NotImplementedError("Calculate winners not implemented")
+        print(" One of the players won")
     
     def get_blind(self,big: bool | int) -> int:
         if big:

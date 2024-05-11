@@ -1,5 +1,6 @@
-import pygame,socket,traceback,pickle
+import pygame,socket,traceback,pickle,random
 from base64 import b64decode
+from PIL import Image
 
 from classes import PIC_FOLDER,Card,Game,Player
 from functions import *
@@ -37,10 +38,8 @@ class GUI():
         self.game : Game = pickle.loads(b64decode(pickleld_game))
         self.player = self.game.get_players()[int(player_index)]
         
-        d,_ = udp_recv(self.sock)
-        while d != b'ACK':
-            send_data(self.sock,b'ACK',self.ADDR)
-            d,_ = udp_recv(self.sock)
+        d,_ = recv_ack(self.sock,"GAME")
+
         
         
         # Handshake complete, ready to start game
@@ -61,25 +60,49 @@ class GUI():
         if self.pos == 2: # Big blind.
             self.bet(self.game.get_blind(True))
         while not finish:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    finish = True
-                # If left click is pressed - check where player clicked.
-                if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
-                    pos = pygame.mouse.get_pos()
-                    distance_from_bet = sub_tuple(pos,BET_POS)
-                    if distance_from_bet[0] < 35 and distance_from_bet[1] < 35:
-                        self.show_bet_menu()
-                    else:
-                        print(pos)
+            
+            from_server,_ = recv_ack(self.sock,["MOVE","TURN","CARDS","EXIT"])
+            fields = from_server.split(b'~') #type:ignore
+            code = fields[0]
+            if code == b'EXIT':
+                finish = True
+                continue
+            if code == b'CARDS':
+                self.show_community_cards(pickle.loads(b64decode(fields[1])))
+            if code == b'MOVE':
+                self.show_move(from_server) #type:ignore
+            if code == b'TURN': # Input player move
+                to_send: bytes = b"Undefined"
+                while to_send == b"Undefined":
+                    self.show_button("xcheckbet")
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            finish = True
+                        
+                        # If left click is pressed - check where player clicked.
+                        if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
+                            pos = pygame.mouse.get_pos()
+                            
+                            distance_from_check = sub_tuple(pos,CHECK_POS)
+                            if distance_from_check[0] < 35 and distance_from_check[1] < 35:
+                                to_send = b'MOVE~0'
+                                break                   
+                            
+                            distance_from_bet = sub_tuple(pos,BET_POS)
+                            if distance_from_bet[0] < 35 and distance_from_bet[1] < 35:
+                                self.show_bet_menu()
+                            else:
+                                print(pos)
+                self.delete_buttons()
+                send_data_ack(self.sock,to_send,self.ADDR,None) #type:ignore
         pygame.quit()
         self.sock.close()
     
     def client_hello(self) ->tuple[bytes,bytes]:
         # Client Hello
         #TODO money,name in gui.
-        money = 100
-        name = "Idan"
+        money = random.randint(80,120)
+        name = random.choice(["Idan","Yossi","Ophir","Emil","Alice","Bob"])
         from_server = None
         while from_server is None:
             send_data(self.sock,f"HELLO~{money}~{name}".encode(),self.ADDR)
@@ -140,28 +163,49 @@ class GUI():
         for i in range(self.index + 1, len(self.game.get_players())):
             self.screen.blit(ariel.render(self.game.get_players()[i].get_name(),False,(255,255,255)),(193,392))
             self.screen.blit(ariel.render(str(self.game.get_players()[i].get_money()) + '$',False,(255,255,255)),(273,302))
+    
+    
+    def delete_buttons(self):
+        im = Image.open(PIC_FOLDER + "table_bg.JPG")
+        im = im.crop((820,310,1024,500))
+        if im.mode != "RGBA":
+            im = im.convert("RGBA")
+        pic = pygame.image.fromstring(im.tobytes(),im.size,"RGBA")
+        self.screen.blit(pic,(820,310))
+        pygame.display.flip()
+    
+    def show_move(self,move : bytes):
+        #TODO
+        """show move played with pygame
+        """
+        print(move)
+    
+    def show_button(self,button: str):
+        if "check" in button:
+            pygame.draw.circle(self.screen,(50,50,255),CHECK_POS,40)
+            impact = pygame.font.SysFont('IMPACT', 28)
+            self.screen.blit(impact.render('CHECK', False, (100, 110, 255)), (931,327))
         
+        if "x" in button:
+            pygame.draw.circle(self.screen,(255,0,0),X_POS,40)
+            impact = pygame.font.SysFont('Verdana', 50)
+            self.screen.blit(impact.render('X', False, (128, 0, 0)), (852,415))
         
-        # Bet button        
-        pygame.draw.circle(self.screen,(255,215,0),BET_POS,40)
-        pygame.draw.circle(self.screen, (240, 176, 0),BET_POS,33,5)
+        if "bet" in button:
+            pygame.draw.circle(self.screen,(255,215,0),BET_POS,40)
+            pygame.draw.circle(self.screen, (240, 176, 0),BET_POS,33,5)
 
-        impact = pygame.font.SysFont('IMPACT', 30)
-        self.screen.blit(impact.render('BET', False, (110, 82, 35)), (950, 427))
+            impact = pygame.font.SysFont('IMPACT', 30)
+            self.screen.blit(impact.render('BET', False, (110, 82, 35)), (950, 427))
         
+        pygame.display.flip()
         
-        # X button        
-        pygame.draw.circle(self.screen,(255,0,0),X_POS,40)
-
-        impact = pygame.font.SysFont('Verdana', 50)
-        self.screen.blit(impact.render('X', False, (128, 0, 0)), (852,415))
-        
-        
-        # Check button
-        pygame.draw.circle(self.screen,(50,50,255),CHECK_POS,40)
-
-        impact = pygame.font.SysFont('IMPACT', 28)
-        self.screen.blit(impact.render('CHECK', False, (100, 110, 255)), (931,327))
+    def show_community_cards(self,cards: list[Card]):
+        x,y = (373,208)
+        for card in cards:
+            self.screen.blit(card.get_picture(),(x,y))
+            x += 40
+        pygame.display.flip()
     
     
     def show_bet_menu(self):
@@ -180,6 +224,9 @@ class GUI():
         
         send_data_ack(self.sock,b'MOVE~' + str(amount).encode(),self.ADDR,"MOVE")
 
+
+
+
 def protocol_build_request(from_user) -> str:
     """
     build the request according to user selection and protocol
@@ -190,14 +237,15 @@ def protocol_build_request(from_user) -> str:
     return str()
 
 
-def protocol_parse_reply(reply) -> str:
+def protocol_parse_reply(reply: bytes) :
     """
     parse the server reply and prepare it to user
     return: answer from server string
     """
-    print("protocol_parse_reply not implemented")
-    return str()
-
+    fields = reply.split(b'~')
+    code = fields[0]
+    if code == b'TURN':
+        pass
 
 
 

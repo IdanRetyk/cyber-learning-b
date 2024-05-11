@@ -31,23 +31,28 @@ def send_data(sock: socket.socket, bdata: bytes, addr, tid: str = "0"):
     print("")
 
 
-def send_data_ack(sock: socket.socket,bdata: bytes,addr,exit_code: str,tid: str = "0",addr_list = []):
+def send_data_ack(sock: socket.socket,bdata: bytes,addr,exit_code: str | None = "ack",tid: str = "0",addr_list = []):
     # Exit code - the expected code, after the ack
     
     response: bytes | None = None
     while response != b'ACK':
         send_data(sock,bdata,addr,tid)
-        response,a = udp_recv(sock,["ACK",exit_code],addr_list)
+        if exit_code is None:
+            response,a = udp_recv(sock,expected_addrs=addr_list)
+        else:
+            response,a = udp_recv(sock,["ACK",exit_code],addr_list)
 
 
 
-def recv_ack(sock: socket.socket,expected_code : str = "",expected_addrs: list[tuple[str,int]] = []) -> tuple[bytes, tuple[str, int]]:
-    print("recv_ack")
-    data,a = udp_recv(sock,expected_code,expected_addrs)
+def recv_ack(sock: socket.socket,expected_codes : list[str] | str = "ACK",expected_addrs: list[tuple[str,int]] = []) -> tuple[bytes, tuple[str, int]]:
+    if isinstance(expected_codes,str):
+        expected_codes = [expected_codes]
+    data,a = udp_recv(sock,expected_codes,expected_addrs)
     msg = data
+    if data != None:
+        send_data(sock,b'ACK',a)
     while data == None:
-        print("recv_ack")
-        data,a = udp_recv(sock,expected_code,expected_addrs)
+        data,a = udp_recv(sock,expected_codes,expected_addrs)
         if data is not None:
             msg = data
             send_data(sock,b'ACK',a)
@@ -69,7 +74,7 @@ def udp_recv(sock: socket.socket,expected_codes: list[str] | str = [],expected_a
         expected_codes = [expected_codes]
     
     
-    sock.settimeout(2)
+    sock.settimeout(0.5)
     try:
         msg, addr = sock.recvfrom(1024)
     except TimeoutError:
@@ -115,19 +120,10 @@ def broadcast(sock: socket.socket, player_arr: list[Player], data: bytes, tid: s
         """
         This will send all players a message. Keep track evry player who send ack. 
         Continue to send the message to every player who didn't sent ack yet.
-        After receiving ack from a player, send them ack back according to the ack-ack architecture.
         """
-        recv_arr: list[bool] = [False] * PLAYER_COUNT
-        while False in recv_arr: # Until every client sent ack
-            for i in range(PLAYER_COUNT):
-                if not recv_arr[i]:
-                    p = player_arr[i]
-                    send_data(sock,data,p.get_addr(),tid)
-                    from_client,addr = udp_recv(sock,"ACK",addrs_list)
-                    if from_client is not None:
-                        recv_arr[index_address(player_arr,addr)] = True
-                        send_data(sock,b'ACK',addr,tid)
-    
+        for player in player_arr:
+            send_data_ack(sock,data,player.get_addr())
+
     else:
         for player in player_arr:
             send_data(sock, data, player.get_addr(), tid)
