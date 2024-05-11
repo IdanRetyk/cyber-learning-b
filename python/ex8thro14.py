@@ -9,7 +9,7 @@ def ex8():
             sum += i
         return sum
 
- 
+
 
 #==============
 #       ex9

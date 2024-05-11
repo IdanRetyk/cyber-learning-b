@@ -31,14 +31,44 @@ def send_data(sock: socket.socket, bdata: bytes, addr, tid: str = "0"):
     print("")
 
 
-def udp_recv(sock: socket.socket,expected_code: str = "") -> tuple[bytes | None, tuple[str, int] | None]:
+def send_data_ack(sock: socket.socket,bdata: bytes,addr,exit_code: str,tid: str = "0",addr_list = []):
+    # Exit code - the expected code, after the ack
+    
+    response: bytes | None = None
+    while response != b'ACK':
+        send_data(sock,bdata,addr,tid)
+        response,a = udp_recv(sock,["ACK",exit_code],addr_list)
+
+
+
+def recv_ack(sock: socket.socket,expected_code : str = "",expected_addrs: list[tuple[str,int]] = []) -> tuple[bytes, tuple[str, int]]:
+    print("recv_ack")
+    data,a = udp_recv(sock,expected_code,expected_addrs)
+    msg = data
+    while data == None:
+        print("recv_ack")
+        data,a = udp_recv(sock,expected_code,expected_addrs)
+        if data is not None:
+            msg = data
+            send_data(sock,b'ACK',a)
+    
+    return msg,a #type:ignore
+
+
+def udp_recv(sock: socket.socket,expected_codes: list[str] | str = [],expected_addrs: list[tuple[str,int]] = []) -> tuple[bytes | None, tuple[str, int] | None]:
     """recvs message.
     If size doesn't match the message, return None
     If got the wrong message type return none.
-    
+    If the message is from a wrong address, return None.
     Returns:
-            tuple[bytes | None,tuple[str,int] | None]:message,address if received message, code is correct, and the size is right. Any other case return NOne,NOne
+            tuple[bytes | None,tuple[str,int] | None]:message,address if received message, code is correct, from the right address, and the size is right.
+            Any other case return NOne,NOne
     """
+    
+    if isinstance(expected_codes,str):
+        expected_codes = [expected_codes]
+    
+    
     sock.settimeout(2)
     try:
         msg, addr = sock.recvfrom(1024)
@@ -48,11 +78,17 @@ def udp_recv(sock: socket.socket,expected_code: str = "") -> tuple[bytes | None,
     fields = msg.split(b"~")
     size = int(fields[0])
     msg = b"~".join(fields[1:])
-    if size != len(msg):
+    
+    if size != len(msg): # Check size field.
         logtcp("recv", msg + b" Wrong Size")
         return None, None
-    if msg.split(b'~')[1] != expected_code.encode():
-        logtcp("recv",msg + b'~expected' + expected_code.encode())
+    
+    if msg.split(b'~')[0].decode() not in expected_codes and len(expected_codes) > 0: # Check if the message has the correct code
+        logtcp("recv",msg + b'~expected ' + str(expected_codes).encode())
+        return None,None
+    
+    if addr not in expected_addrs and len(expected_addrs) > 0: # Check if the message was recieved from a user.
+        logtcp("recv",b'msg was sent from wrong user')
         return None,None
     logtcp("recv",msg)
     return msg, addr
@@ -62,7 +98,7 @@ def sub_tuple(tuple1: tuple[int, int], tuple2: tuple[int, int]) -> tuple[int, ..
     return tuple([abs(a - b) for a, b in zip(tuple1, tuple2)])
 
 
-def broadcast(sock: socket.socket, player_arr: list[Player], data: bytes, tid: str,support_ack:bool = False):
+def broadcast(sock: socket.socket, player_arr: list[Player], data: bytes, tid: str,addrs_list: list[tuple[str,int]] = [],support_ack:bool = False):
     """send all players in player_arr, a message. 
         if support_ack:
             will only finish function when every single player send an ack back.
@@ -72,6 +108,7 @@ def broadcast(sock: socket.socket, player_arr: list[Player], data: bytes, tid: s
         player_arr (list[Player]): list of players
         data (bytes): data to broadcast
         tid (str): thread id
+        addrs_list (list[tuple[str,int]]): list of the address from which we expect to recive messages.
         support_ack (bool, optional): weather of not check for ack from players. Defaults to False.
     """
     if support_ack:
@@ -86,7 +123,7 @@ def broadcast(sock: socket.socket, player_arr: list[Player], data: bytes, tid: s
                 if not recv_arr[i]:
                     p = player_arr[i]
                     send_data(sock,data,p.get_addr(),tid)
-                    from_client,addr = udp_recv(sock,"ACK")
+                    from_client,addr = udp_recv(sock,"ACK",addrs_list)
                     if from_client is not None:
                         recv_arr[index_address(player_arr,addr)] = True
                         send_data(sock,b'ACK',addr,tid)
@@ -106,4 +143,4 @@ def index_address(player_arr: list[Player],addr) -> int:
     for i in range(len(player_arr)):
         if player_arr[i].get_addr() == addr:
             return i
-    raise ValueError("Value not found")
+    return -1

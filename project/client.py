@@ -53,7 +53,13 @@ class GUI():
         self.load_images()
         pygame.display.flip()
         
+        self.pos = self.player.get_position()
         
+        
+        if self.pos == 1: # Small blind.
+            self.bet(self.game.get_blind(False))
+        if self.pos == 2: # Big blind.
+            self.bet(self.game.get_blind(True))
         while not finish:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -167,6 +173,12 @@ class GUI():
         print("BET")
         #TODO implement this
 
+    
+    def bet(self,amount):
+        "Show in gui bet and send server bet message"
+        #TODO show bet in gui
+        
+        send_data_ack(self.sock,b'MOVE~' + str(amount).encode(),self.ADDR,"MOVE")
 
 def protocol_build_request(from_user) -> str:
     """

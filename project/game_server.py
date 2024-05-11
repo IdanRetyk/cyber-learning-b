@@ -16,7 +16,7 @@ from classes import *
 all_to_die = False
 
 LOCK = threading.Lock()
-PLAYER_COUNT = 1
+PLAYER_COUNT = 2
 OPEN_NEW_GAME: bool = True # When this var is true, any new client that connects will start a new game
                             #if its false, new client will be send to an already existing waiting room
 
@@ -33,20 +33,24 @@ def protocol_build_reply(request):
     return b""
 
 
-def handle_request(request):
+def handle_move(from_player: bytes,player_position: int,game : Game) -> bytes:
     # """
     # Handle client request
-    # tuple :return: return message (bytes) to send to client and bool if to close the client socket
+    # tuple :return: return message (bytes) to send to client
     # """
-    try:
-        request_code = request[:4]
-        to_send = protocol_build_reply(request)
-        if request_code == b"EXIT":
-            return to_send, True
-    except Exception as err:
-        print(traceback.format_exc())
-        to_send = b"ERRR~008~General error"
-    return to_send, False
+    fields = from_player.split(b'~')
+    if fields[0] != b'MOVE':
+        raise ValueError()
+    if fields[1] == b'-1': # Fold
+        game.get_players()[player_position].fold()
+        return f"MOVE~-1~{player_position}".encode()
+    if fields[1] == b'0' :# Check
+        return f"MOVE~0~{player_position}".encode()
+    else: # Bet
+        #TODO bet shouldn't go directly to the pot
+        game.change_pot(int(fields[1]))
+        game.get_players()[player_position].change_money(-int(fields[1]))
+        return f"MOVE~{int(fields[1])}~{player_position}".encode()
 
 
 def waiting_room(sock: socket.socket, data: bytes,addr,tid: str) -> Game:
@@ -72,9 +76,9 @@ def waiting_room(sock: socket.socket, data: bytes,addr,tid: str) -> Game:
         from_player, addr = udp_recv(sock)
         if from_player is not None:
             code, money, name = from_player.split(b"~")  # type:ignore
-        if code == b"HELLO" and pos != PLAYER_COUNT and from_player is not None: 
+        if code == b"HELLO" and pos != PLAYER_COUNT and from_player is not None and index_address(player_arr,addr) == -1: # Add player to the game
             pos += 1
-            player_arr.append(Player(addr, pos, money, name))  # type:ignore
+            player_arr.append(Player(addr, pos, int(money), name))  # type:ignore
             to_broadcast = b"HELLO~" + str(PLAYER_COUNT - len(player_arr)).encode()
             broadcast(sock, player_arr, to_broadcast, tid)
     
@@ -119,13 +123,24 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
                 p = p_arr[i]
                 to_send = b'GAME~' + bytes_game +b'~'+ str(p_arr.index(p)).encode()
                 send_data(sock,to_send,p.get_addr(),tid)
-                from_client,addr = udp_recv(sock,"ACK")
+                from_client,addr = udp_recv(sock,"ACK",game.get_addresses_list())
                 if from_client is not None:
                     recv_arr[index_address(p_arr,addr)] = True
                     send_data(sock,b'ACK',addr,tid)
 
     print("HANDSHAKE complete")
-    OPEN_NEW_GAME = True
+    # OPEN_NEW_GAME = True
+    
+    #Recive blinds
+    msg,a= recv_ack(sock,"MOVE",game.get_addresses_list())
+    response = handle_move(msg,index_address(game.get_players(),a),game)
+    broadcast(sock,game.get_players(),response,tid)
+    msg,a = recv_ack(sock,"MOVE",game.get_addresses_list())
+    response = handle_move(msg,index_address(game.get_players(),a),game)
+    broadcast(sock,game.get_players(),response,tid)
+    
+    
+    
     # TODO implement main game loop
     # finish = False
     # while not finish:

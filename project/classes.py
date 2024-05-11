@@ -116,7 +116,8 @@ class Player:
                 position: int,
                 money: int,
                 name: str = "",
-                hand: tuple[Card,Card] | None = None
+                hand: tuple[Card,Card] | None = None,
+                folded: bool = False
                 ) -> None:
 
         self.__addr = addr
@@ -124,6 +125,10 @@ class Player:
         self.__hand: tuple[Card,Card] | None = hand
         self.__money = money
         self.__name = name
+    
+    def __repr__(self) -> str:
+        return f"addr - {self.__addr}, pos - { self.__pos}, {type(self.__money) =}"
+    
     
     def set_addr(self, addr: tuple[str,int]):
         self.__addr = addr
@@ -157,13 +162,18 @@ class Player:
     def get_money(self) -> int:
         return self.__money
     
-    def change_money(self, amount):
+    def change_money(self, amount: int):
         self.__money += amount
 
+    def fold(self):
+        self.folded = True
     
-
+    def is_playing(self):
+        return not self.folded
+    
+    
 class Game:
-    def __init__(self,player_arr :list[Player] | None = None) -> None:
+    def __init__(self,player_arr :list[Player] | None = None,blinds: tuple[int,int] = (5,10)) -> None:
         if player_arr is None:
             player_arr = []
         self.__deck = CardDeck()
@@ -171,6 +181,7 @@ class Game:
         self.__community_cards: list[Card] = list() # The cards everyone can see
         self.__players: list[Player] = player_arr
         self.__pot: int = 0
+        self.__small_blind,self.__big_blind = blinds
 
         self.__deal_cards()
     
@@ -190,6 +201,10 @@ class Game:
             player.set_hand((self.__deck.draw_card(),self.__deck.draw_card()))
     
     
+    def does_player_exist(self,addr):
+        return addr in self.get_addresses_list()
+    
+    
     def get_players(self) -> list[Player]:
         return self.__players
 
@@ -202,7 +217,9 @@ class Game:
     def get_pot(self) -> int:
         return self.__pot
     
-    
+    def get_addresses_list(self) -> list[tuple[str,int]]:
+        """return list of player's addresses"""
+        return [p.get_addr() for p in self.__players]
     
     def show_flop(self):
         for _ in range(3):
@@ -216,6 +233,12 @@ class Game:
     
     def calculate_winners(self):
         raise NotImplementedError("Calculate winners not implemented")
+    
+    def get_blind(self,big: bool | int) -> int:
+        if big:
+            return self.__big_blind
+        else:
+            return self.__small_blind
 
 
 
