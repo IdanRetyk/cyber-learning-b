@@ -60,7 +60,7 @@ class GUI():
         if self.pos == 2: # Big blind.
             self.bet(self.game.get_blind(True))
         while not finish:
-            
+            self.update_gui()
             from_server,_ = recv_ack(self.sock,["MOVE","TURN","CARDS","EXIT"])
             fields = from_server.split(b'~') #type:ignore
             code = fields[0]
@@ -70,11 +70,14 @@ class GUI():
             if code == b'CARDS':
                 self.show_community_cards(pickle.loads(b64decode(fields[1])))
             if code == b'MOVE':
-                self.show_move(from_server) #type:ignore
+                self.do_move(from_server) #type:ignore
             if code == b'TURN': # Input player move
                 to_send: bytes = b"Undefined"
                 while to_send == b"Undefined":
-                    self.show_button("xcheckbet")
+                    if fields[1] == b'0':
+                        self.show_button("xcheckbet")
+                    else:
+                        self.show_button("xraise")
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
                             finish = True
@@ -129,6 +132,27 @@ class GUI():
         return pickled_game,player_index # type:ignore
     
     
+    def update_gui(self):
+        # Show pot
+        ariel = pygame.font.SysFont("Ariel",22)
+        self.screen.blit(ariel.render(str(self.game.get_pot()) + '$',False,(255,255,255),(220,0,0)),(465,177))
+        
+        
+        # Other players' name and money
+        name_loc = [(442,470),(193,392),(220,24),(675,24),(759,392)]
+        name_loc = name_loc[5 - self.index:] + name_loc[:5 - self.index] # Rotate list 
+        money_loc = [(445,298),(276,302),(269, 141),(685, 140),(705, 303)]
+        money_loc = money_loc[5 - self.index:] + money_loc[:5 - self.index]
+        
+        for i in range(self.index,self.index + 5):
+            i %= 5
+            try:
+                self.screen.blit(ariel.render(self.game.get_players()[i].get_name(),False,(255,255,255),(0,0,0)),name_loc[i])
+                self.screen.blit(ariel.render(str(self.game.get_players()[i].get_money()) + '$',False,(255,255,255),(220,0,0)),money_loc[i])
+            except Exception as e:
+                pass
+        pygame.display.flip()
+    
     def load_images(self):
         self.screen.fill((255,255,255))
         
@@ -154,15 +178,6 @@ class GUI():
         
         pygame.font.init()
         
-        # Other players' names, and money
-        # TODO this works only for two players rn
-        ariel = pygame.font.SysFont("Ariel",22)
-        for i in range(self.index):
-            self.screen.blit(ariel.render(self.game.get_players()[i].get_name(),False,(255,255,255)),(193,392))
-            self.screen.blit(ariel.render(str(self.game.get_players()[i].get_money()) + '$',False,(255,255,255)),(273,302))
-        for i in range(self.index + 1, len(self.game.get_players())):
-            self.screen.blit(ariel.render(self.game.get_players()[i].get_name(),False,(255,255,255)),(193,392))
-            self.screen.blit(ariel.render(str(self.game.get_players()[i].get_money()) + '$',False,(255,255,255)),(273,302))
     
     
     def delete_buttons(self):
@@ -174,10 +189,23 @@ class GUI():
         self.screen.blit(pic,(820,310))
         pygame.display.flip()
     
-    def show_move(self,move : bytes):
-        #TODO
-        """show move played with pygame
+    
+    def do_move(self,move : bytes):
         """
+        first calculate and update game object
+        than show in gui the move.
+        """
+        code,move_number,p_index = move.split(b'~')
+        if move_number == b'0':
+            type_ = "check"
+        elif move_number == b'-1':
+            type_ = "fold"
+        else:
+            type_ = "bet"
+            self.game.get_players()[int(p_index)].change_money(-int(move_number))
+            self.game.change_pot(int(move_number))
+        
+        #TODO garphics
         print(move)
     
     def show_button(self,button: str):
@@ -191,7 +219,7 @@ class GUI():
             impact = pygame.font.SysFont('Verdana', 50)
             self.screen.blit(impact.render('X', False, (128, 0, 0)), (852,415))
         
-        if "bet" in button:
+        if "bet" in button or "raise" in button: # TODO separate this
             pygame.draw.circle(self.screen,(255,215,0),BET_POS,40)
             pygame.draw.circle(self.screen, (240, 176, 0),BET_POS,33,5)
 
