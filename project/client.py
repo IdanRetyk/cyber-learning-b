@@ -14,22 +14,17 @@ pygame.init()
 BET_POS: tuple[int,int] = (970,445)
 CHECK_POS: tuple[int,int] = (970,345)
 X_POS :tuple[int,int] = (870,445)
-
+PLUS_POS: tuple[int,int] = (30,450)
+MINUS_POS: tuple[int,int] = (100,450)
 
 
 
 class GUI():
     def __init__(self,ip) -> None:
-
-        
-
         finish = False
-
         self.sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
-        
-        port = 1235
-        self.ADDR = (ip,port)
+        self.ADDR = (ip,1235)
         
         pickleld_game,player_index = self.client_hello()
         
@@ -39,26 +34,21 @@ class GUI():
         self.game : Game = pickle.loads(b64decode(pickleld_game))
         self.player = self.game.get_players()[int(player_index)]
         
-        d,_ = recv_ack(self.sock,"GAME")
-
-        
-        
+        d,_ = recv_ack(self.sock,"GAME") # Until changing client hello this line is necessary for some reason
         # Handshake complete, ready to start game
 
         size = (WINDOW_WIDTH, WINDOW_HEIGHT)
         self.screen = pygame.display.set_mode(size)
         pygame.display.set_caption("Game")
         
-        
-        self.load_images()
-        pygame.display.flip()
-        
+        self.load_images()        
         self.pos = self.player.get_position()
         
         blinds(self.game)
         
         while not finish:
             self.update_gui()
+            
             from_server,_ = recv_ack(self.sock,["MOVE","TURN","CARDS","EXIT"])
             fields = from_server.split(b'~') #type:ignore
             code = fields[0]
@@ -70,16 +60,20 @@ class GUI():
                 self.show_community_cards(pickle.loads(b64decode(fields[1])))
                 # Prepare the next round of betting
                 self.game.set_bet_size(0)
-                self.player.set_curr_bet(0)
+                for player in self.game.get_players():
+                    player.set_curr_bet(0)
             if code == b'MOVE':
                 self.do_move(from_server) #type:ignore
             if code == b'TURN': # Input player move
                 to_send: bytes = b"Undefined"
+                show_bet_menu: bool = False
                 while to_send == b"Undefined":
                     if fields[1] == b'0':
                         self.show_button("xcheckbet")
                     else:
                         self.show_button("xraisecall")
+                        
+                    
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
                             finish = True
@@ -96,9 +90,37 @@ class GUI():
                             
                             distance_from_bet = sub_tuple(pos,BET_POS)
                             if distance_from_bet[0] < 35 and distance_from_bet[1] < 35:
-                                self.show_bet_menu()
-                            else:
-                                print(pos)
+                                # Bet
+                                
+                                # Need to chose how much to bet.
+                                if not show_bet_menu:
+                                    show_bet_menu = True
+                                    self.amount = self.min_bet = self.game.get_bet_size()
+                                    self.max_bet = self.player.get_money()
+                                    self.show_bet_menu()
+                                else:
+                                    show_bet_menu = False
+                                    to_send = f'MOVE~{self.amount}~{self.index}'.encode()
+                            
+                            if show_bet_menu:
+                                
+                                distance_from_minus = sub_tuple(pos,MINUS_POS)
+                                distance_from_plus = sub_tuple(pos,PLUS_POS)
+                                if distance_from_minus[0] < 25 and distance_from_minus[1] < 25:
+                                    # Minus pressed
+                                    self.amount -= max(self.min_bet,self.game.get_blind(False))
+                                    print("minus")
+                                elif distance_from_plus[0] < 25 and distance_from_plus[1] < 25:
+                                    # Plus pressed
+                                    self.amount += max(self.min_bet,self.game.get_blind(False))
+                                    print("plus")
+                                self.amount = min(max(self.amount,self.min_bet),self.max_bet) # Makes sure that min_bet <= amount <= max_bet
+                                ariel = pygame.font.SysFont("Ariel",22)
+                                self.screen.blit(ariel.render(str(self.amount) + '$',False,(255,255,255),(0,0,0)),(55,450))
+                                
+                                pygame.display.flip()
+                                
+                                
                 self.delete_buttons()
                 send_data_ack(self.sock,to_send,self.ADDR,None) #type:ignore
 
@@ -157,7 +179,6 @@ class GUI():
                 pass
         pygame.display.flip()
     
-    
     def load_images(self):
         self.screen.fill((255,255,255))
         
@@ -182,17 +203,23 @@ class GUI():
         self.screen.blit(card2.get_picture(),(355,435))
         
         pygame.font.init()
-        
     
     def delete_buttons(self):
         im = Image.open(PIC_FOLDER + "table_bg.JPG")
-        im = im.crop((820,310,1024,500))
+        im = im.crop((800,310,1024,500))
         if im.mode != "RGBA":
             im = im.convert("RGBA")
         pic = pygame.image.fromstring(im.tobytes(),im.size,"RGBA")
-        self.screen.blit(pic,(820,310))
+        self.screen.blit(pic,(800,310))
+        
+        im = Image.open(PIC_FOLDER + "table_bg.JPG")
+        im = im.crop((0,400,200,500))
+        if im.mode != "RGBA":
+            im = im.convert("RGBA")
+        pic = pygame.image.fromstring(im.tobytes(),im.size,"RGBA")
+        self.screen.blit(pic,(0,400))
+        
         pygame.display.flip()
-    
     
     def do_move(self,move : bytes):
         """
@@ -205,7 +232,7 @@ class GUI():
         elif move_number == b'-1':
             type_ = "fold"
         else:
-            type_ = "bet"
+            type_ = "bet" # Or call
             amount = int(move_number) - self.game.get_players()[int(p_index)].get_curr_bet()
             self.game.get_players()[int(p_index)].change_money(-amount)
             self.game.get_players()[int(p_index)].set_curr_bet(int(move_number))
@@ -251,19 +278,20 @@ class GUI():
     
     
     def show_bet_menu(self):
-        #TODO how much player bet
-        amount = min_bet = self.game.get_bet_size()
-        max_bet = self.player.get_money()
+        plus = pygame.image.load(PIC_FOLDER + "plus.jpeg")
+        minus = pygame.image.load(PIC_FOLDER + "minus.jpeg")
         
-        self.bet(amount)
-        print("BET")
-        #TODO implement this
-
+        self.screen.blit(plus,PLUS_POS)
+        self.screen.blit(minus,MINUS_POS)
+        
+        ariel = pygame.font.SysFont("Ariel",22)
+        self.screen.blit(ariel.render("0$",False,(255,255,255),(0,0,0)),(55,450))
+                                
+        pygame.display.flip()
     
     def bet(self,amount: int):
-        "Show in gui bet and send server bet message"
-        #TODO show bet in gui
-        
+        """wrapper for send_data_ack statement
+        """
         send_data_ack(self.sock,b'MOVE~' + str(amount).encode(),self.ADDR,"MOVE")
 
 
