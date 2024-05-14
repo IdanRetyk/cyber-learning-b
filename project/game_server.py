@@ -47,7 +47,7 @@ def handle_move(from_player: bytes,player_position: int,game : Game) -> tuple[by
     if fields[1] == b'0' :# Check
         return f"MOVE~0~{player_position}".encode(),"check"
     else: 
-        if fields[1] == game.get_bet_size(): # Call
+        if int(fields[1]) == game.get_bet_size(): # Call
             game.change_pot(int(fields[1]))
             game.get_players()[player_position].change_money(-int(fields[1]))
             return f"MOVE~{int(fields[1])}~{player_position}".encode(),"call"
@@ -137,10 +137,10 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
     # OPEN_NEW_GAME = True
     
     #Recive blinds
-    msg,a= recv_ack(sock,"MOVE",game.get_addresses_list())
+    msg,a= recv_ack(sock,"MOVE",[game.get_addresses_list()[0]])
     response,_ = handle_move(msg,index_address(game.get_players(),a),game)
     broadcast(sock,game.get_players(),response,tid)
-    msg,a = recv_ack(sock,"MOVE",game.get_addresses_list())
+    msg,a = recv_ack(sock,"MOVE",[game.get_addresses_list()[1]])
     response,_ = handle_move(msg,index_address(game.get_players(),a),game)
     broadcast(sock,game.get_players(),response,tid)
     
@@ -158,7 +158,7 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
             # Preflop betting
             count = 0
             while count < game.players_in_game(): 
-                send_data_ack(sock,f"TURN~{turn}".encode(),addr_list[turn],"MOVE")
+                send_data_ack(sock,f"TURN~{game.get_bet_size()}".encode(),addr_list[turn],"MOVE")
                 from_player,a = recv_ack(sock,"MOVE",[addr_list[turn]])
                 to_broadcast,move_type = handle_move(from_player,turn,game)
                 if move_type == 'bet':

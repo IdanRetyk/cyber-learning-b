@@ -77,6 +77,8 @@ def udp_recv(sock: socket.socket,expected_codes: list[str] | str = [],expected_a
     sock.settimeout(0.5)
     try:
         msg, addr = sock.recvfrom(1024)
+    except KeyboardInterrupt:
+        raise KeyboardInterrupt()
     except TimeoutError:
         logtcp("recv", b"None")
         return None, None

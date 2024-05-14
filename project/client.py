@@ -1,3 +1,4 @@
+import time
 import pygame,socket,traceback,pickle,random
 from base64 import b64decode
 from PIL import Image
@@ -58,6 +59,7 @@ class GUI():
         if self.pos == 1: # Small blind.
             self.bet(self.game.get_blind(False))
         if self.pos == 2: # Big blind.
+            time.sleep(1.5)
             self.bet(self.game.get_blind(True))
         while not finish:
             self.update_gui()
@@ -77,7 +79,7 @@ class GUI():
                     if fields[1] == b'0':
                         self.show_button("xcheckbet")
                     else:
-                        self.show_button("xraise")
+                        self.show_button("xraisecall")
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
                             finish = True
@@ -88,7 +90,7 @@ class GUI():
                             
                             distance_from_check = sub_tuple(pos,CHECK_POS)
                             if distance_from_check[0] < 35 and distance_from_check[1] < 35:
-                                to_send = b'MOVE~0'
+                                to_send = b'MOVE~' + str(self.game.get_bet_size()).encode()
                                 break                   
                             
                             distance_from_bet = sub_tuple(pos,BET_POS)
@@ -153,6 +155,7 @@ class GUI():
                 pass
         pygame.display.flip()
     
+    
     def load_images(self):
         self.screen.fill((255,255,255))
         
@@ -179,7 +182,6 @@ class GUI():
         pygame.font.init()
         
     
-    
     def delete_buttons(self):
         im = Image.open(PIC_FOLDER + "table_bg.JPG")
         im = im.crop((820,310,1024,500))
@@ -204,22 +206,30 @@ class GUI():
             type_ = "bet"
             self.game.get_players()[int(p_index)].change_money(-int(move_number))
             self.game.change_pot(int(move_number))
+            self.game.set_bet_size(int(move_number))
         
         #TODO garphics
         print(move)
     
-    def show_button(self,button: str):
-        if "check" in button:
+    def show_button(self,button_str: str):
+        if "check" in button_str:
             pygame.draw.circle(self.screen,(50,50,255),CHECK_POS,40)
             impact = pygame.font.SysFont('IMPACT', 28)
             self.screen.blit(impact.render('CHECK', False, (100, 110, 255)), (931,327))
+            
+        elif "call" in button_str:
+            pygame.draw.circle(self.screen,(50,50,255),CHECK_POS,40)
+            impact = pygame.font.SysFont('IMPACT', 28)
+            self.screen.blit(impact.render('CALL', False, (100, 110, 255)), (940,327))
+            impact = pygame.font.SysFont('IMPACT', 18)
+            self.screen.blit(impact.render(str(self.game.get_bet_size()) + '$', False, (100, 110, 255)), (940,350))
         
-        if "x" in button:
+        if "x" in button_str:
             pygame.draw.circle(self.screen,(255,0,0),X_POS,40)
             impact = pygame.font.SysFont('Verdana', 50)
             self.screen.blit(impact.render('X', False, (128, 0, 0)), (852,415))
         
-        if "bet" in button or "raise" in button: # TODO separate this
+        if "bet" in button_str or "raise" in button_str: # TODO separate this
             pygame.draw.circle(self.screen,(255,215,0),BET_POS,40)
             pygame.draw.circle(self.screen, (240, 176, 0),BET_POS,33,5)
 
