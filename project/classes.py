@@ -117,7 +117,6 @@ class Player:
                 money: int,
                 name: str = "",
                 hand: tuple[Card,Card] | None = None,
-                folded: bool = False
                 ) -> None:
 
         self.__addr = addr
@@ -125,8 +124,8 @@ class Player:
         self.__hand: tuple[Card,Card] | None = hand
         self.__money = money
         self.__name = name
-        self.__folded = False
-        
+        self.__folded: bool = False
+        self.__current_bet: int = 0
         
     def __repr__(self) -> str:
         return f"addr - {self.__addr}, pos - { self.__pos}, {type(self.__money) =}"
@@ -173,6 +172,11 @@ class Player:
     def is_playing(self):
         return not self.__folded
     
+    def get_curr_bet(self) -> int:
+        return self.__current_bet
+    
+    def set_curr_bet(self,amount:int):
+        self.__current_bet = amount
     
 class Game:
     def __init__(self,player_arr :list[Player] | None = None,blinds: tuple[int,int] = (5,10)) -> None:

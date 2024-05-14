@@ -55,12 +55,8 @@ class GUI():
         
         self.pos = self.player.get_position()
         
+        blinds(self.game)
         
-        if self.pos == 1: # Small blind.
-            self.bet(self.game.get_blind(False))
-        if self.pos == 2: # Big blind.
-            time.sleep(1.5)
-            self.bet(self.game.get_blind(True))
         while not finish:
             self.update_gui()
             from_server,_ = recv_ack(self.sock,["MOVE","TURN","CARDS","EXIT"])
@@ -70,7 +66,11 @@ class GUI():
                 finish = True
                 continue
             if code == b'CARDS':
+                # Show cards
                 self.show_community_cards(pickle.loads(b64decode(fields[1])))
+                # Prepare the next round of betting
+                self.game.set_bet_size(0)
+                self.player.set_curr_bet(0)
             if code == b'MOVE':
                 self.do_move(from_server) #type:ignore
             if code == b'TURN': # Input player move
@@ -90,6 +90,7 @@ class GUI():
                             
                             distance_from_check = sub_tuple(pos,CHECK_POS)
                             if distance_from_check[0] < 35 and distance_from_check[1] < 35:
+                                # CHECK,CALL 
                                 to_send = b'MOVE~' + str(self.game.get_bet_size()).encode()
                                 break                   
                             
@@ -100,6 +101,7 @@ class GUI():
                                 print(pos)
                 self.delete_buttons()
                 send_data_ack(self.sock,to_send,self.ADDR,None) #type:ignore
+
         pygame.quit()
         self.sock.close()
     
@@ -204,8 +206,10 @@ class GUI():
             type_ = "fold"
         else:
             type_ = "bet"
-            self.game.get_players()[int(p_index)].change_money(-int(move_number))
-            self.game.change_pot(int(move_number))
+            amount = int(move_number) - self.game.get_players()[int(p_index)].get_curr_bet()
+            self.game.get_players()[int(p_index)].change_money(-amount)
+            self.game.get_players()[int(p_index)].set_curr_bet(int(move_number))
+            self.game.change_pot(amount)
             self.game.set_bet_size(int(move_number))
         
         #TODO garphics
@@ -222,7 +226,7 @@ class GUI():
             impact = pygame.font.SysFont('IMPACT', 28)
             self.screen.blit(impact.render('CALL', False, (100, 110, 255)), (940,327))
             impact = pygame.font.SysFont('IMPACT', 18)
-            self.screen.blit(impact.render(str(self.game.get_bet_size()) + '$', False, (100, 110, 255)), (940,350))
+            self.screen.blit(impact.render(str(self.game.get_bet_size() - self.player.get_curr_bet()) + '$', False, (100, 110, 255)), (948,350))
         
         if "x" in button_str:
             pygame.draw.circle(self.screen,(255,0,0),X_POS,40)
@@ -248,15 +252,15 @@ class GUI():
     
     def show_bet_menu(self):
         #TODO how much player bet
-        amount = 0
+        amount = min_bet = self.game.get_bet_size()
+        max_bet = self.player.get_money()
         
-        to_send = b'MOVE~BET~' + str(amount).encode()
-        send_data(self.sock,to_send,self.ADDR)
+        self.bet(amount)
         print("BET")
         #TODO implement this
 
     
-    def bet(self,amount):
+    def bet(self,amount: int):
         "Show in gui bet and send server bet message"
         #TODO show bet in gui
         

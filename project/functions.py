@@ -142,3 +142,18 @@ def index_address(player_arr: list[Player],addr) -> int:
         if player_arr[i].get_addr() == addr:
             return i
     return -1
+
+
+def blinds(game: Game):
+    """Takes care of the blinds
+
+    Args:
+        game (Game): _description_
+    """
+    s,b = game.get_blind(False),game.get_blind(True)
+    game.change_pot(s + b)
+    game.get_players()[0].change_money(-s)
+    game.get_players()[1].change_money(-b)
+    game.set_bet_size(b)
+    game.get_players()[0].set_curr_bet(s)
+    game.get_players()[1].set_curr_bet(b)

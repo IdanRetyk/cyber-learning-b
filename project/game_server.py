@@ -50,10 +50,12 @@ def handle_move(from_player: bytes,player_position: int,game : Game) -> tuple[by
         if int(fields[1]) == game.get_bet_size(): # Call
             game.change_pot(int(fields[1]))
             game.get_players()[player_position].change_money(-int(fields[1]))
+            game.get_players()[player_position].set_curr_bet(int(fields[1]))
             return f"MOVE~{int(fields[1])}~{player_position}".encode(),"call"
         else: # Bet size
             game.change_pot(int(fields[1]))
             game.get_players()[player_position].change_money(-int(fields[1]))
+            game.get_players()[player_position].set_curr_bet(int(fields[1]))
             game.set_bet_size(int(fields[1]))
             return f"MOVE~{int(fields[1])}~{player_position}".encode(),"bet"
 
@@ -91,6 +93,22 @@ def waiting_room(sock: socket.socket, data: bytes,addr,tid: str) -> Game:
     return Game(player_arr)
 
 
+
+def do_betting_round(sock: socket.socket,game: Game,turn: int,tid: str):
+    count = 0
+    addr_list = game.get_addresses_list()
+    while count < game.players_in_game(): 
+        send_data_ack(sock,f"TURN~{game.get_bet_size()}".encode(),addr_list[turn],"MOVE")
+        from_player,a = recv_ack(sock,"MOVE",[addr_list[turn]])
+        to_broadcast,move_type = handle_move(from_player,turn,game)
+        if move_type == 'bet':
+            count = 1
+        else:
+            count += 1
+        turn += 1
+        turn %= PLAYER_COUNT
+        broadcast(sock,game.get_players(),to_broadcast,tid,addr_list)
+    game.set_bet_size(0)
 
 
 
@@ -137,93 +155,43 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
     # OPEN_NEW_GAME = True
     
     #Recive blinds
-    msg,a= recv_ack(sock,"MOVE",[game.get_addresses_list()[0]])
-    response,_ = handle_move(msg,index_address(game.get_players(),a),game)
-    broadcast(sock,game.get_players(),response,tid)
-    msg,a = recv_ack(sock,"MOVE",[game.get_addresses_list()[1]])
-    response,_ = handle_move(msg,index_address(game.get_players(),a),game)
-    broadcast(sock,game.get_players(),response,tid)
-    
+    blinds(game)
     
     
     # TODO implement main game loop
     finish = False
-    turn = 2 % PLAYER_COUNT
-    addr_list = game.get_addresses_list()
     while not finish:
         if all_to_die:
             print('will close due to main server issue')
             break
         try:
+            
             # Preflop betting
-            count = 0
-            while count < game.players_in_game(): 
-                send_data_ack(sock,f"TURN~{game.get_bet_size()}".encode(),addr_list[turn],"MOVE")
-                from_player,a = recv_ack(sock,"MOVE",[addr_list[turn]])
-                to_broadcast,move_type = handle_move(from_player,turn,game)
-                if move_type == 'bet':
-                    count = 1
-                else:
-                    count += 1
-                turn += 1
-                turn %= PLAYER_COUNT
-                broadcast(sock,game.get_players(),to_broadcast,tid,addr_list)
-            game.set_bet_size(0)
+            turn = 2 % PLAYER_COUNT
+            do_betting_round(sock,game,turn,tid)
             game.show_flop()
             broadcast(sock,game.get_players(),b'CARDS~' + b64encode(pickle.dumps(game.get_community_cards())),tid)
             
+            
             # Flop betting
-            count = 0
-            while count < game.players_in_game(): 
-                send_data_ack(sock,f"TURN~{turn}".encode(),addr_list[turn],"MOVE")
-                from_player,a = recv_ack(sock,"MOVE",[addr_list[turn]])
-                to_broadcast,move_type = handle_move(from_player,turn,game)
-                if move_type == 'bet':
-                    count = 1
-                else:
-                    count += 1
-                turn += 1
-                turn %= PLAYER_COUNT
-                broadcast(sock,game.get_players(),to_broadcast,tid,addr_list)
-            game.set_bet_size(0)
+            turn = 0
+            do_betting_round(sock,game,turn,tid)
             game.show_turn()
             broadcast(sock,game.get_players(),b'CARDS~' + b64encode(pickle.dumps(game.get_community_cards())),tid)
             
             
             # Turn betting
-            count = 0
-            while count < game.players_in_game(): 
-                send_data_ack(sock,f"TURN~{turn}".encode(),addr_list[turn],"MOVE")
-                from_player,a = recv_ack(sock,"MOVE",[addr_list[turn]])
-                to_broadcast,move_type = handle_move(from_player,turn,game)
-                if move_type == 'bet':
-                    count = 1
-                else:
-                    count += 1
-                broadcast(sock,game.get_players(),to_broadcast,tid,addr_list)
-                turn += 1
-                turn %= PLAYER_COUNT
-            game.set_bet_size(0)
+            turn = 0
+            do_betting_round(sock,game,turn,tid)
             game.show_river()
             broadcast(sock,game.get_players(),b'CARDS~' + b64encode(pickle.dumps(game.get_community_cards())),tid)
             
             
             # River betting
-            count = 0
-            while count < game.players_in_game(): 
-                send_data_ack(sock,f"TURN~{turn}".encode(),addr_list[turn],"MOVE")
-                from_player,a = recv_ack(sock,"MOVE",[addr_list[turn]])
-                to_broadcast,move_type = handle_move(from_player,turn,game)
-                if move_type == 'bet':
-                    count = 1
-                else:
-                    count += 1
-                broadcast(sock,game.get_players(),to_broadcast,tid,addr_list) 
-                turn += 1
-                turn %= PLAYER_COUNT
-            game.set_bet_size(0)
+            turn = 0
+            do_betting_round(sock,game,turn,tid)
             game.calculate_winners()
-            broadcast(sock,game.get_players(),b'CARDS~' +b64encode(pickle.dumps(game.get_community_cards())),tid)
+            broadcast(sock,game.get_players(),b'WINNER',tid)
             
             
             broadcast(sock,game.get_players(),b'EXIT',tid)
