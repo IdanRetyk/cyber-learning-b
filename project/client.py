@@ -61,6 +61,11 @@ class GUI():
                 self.win(winner_list)
             
                 finish = True
+                
+                # Add all bets to pot
+                for player in self.game.get_players():
+                    self.game.change_pot(player.get_curr_bet())
+                    player.set_curr_bet(0)
                 self.update_gui(winner_list)
                 time.sleep(5)
                 
