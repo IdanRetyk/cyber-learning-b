@@ -56,12 +56,12 @@ class GUI():
                 finish = True
                 continue
             if code == b'WINNER':
-                winner_index = int(fields[1])
-                self.game.get_players()[winner_index].change_money(self.game.empty_pot()) # Transfer money in the pot into winner's money
-                for player in self.game.get_players():
-                    self.game.get_players()[winner_index].change_money(player.get_curr_bet())
+                winner_list = [int(f) for f in fields[1:]]
+                
+                self.win(winner_list)
+            
                 finish = True
-                self.update_gui(True)
+                self.update_gui(winner_list)
                 time.sleep(5)
                 
                 continue
@@ -185,8 +185,15 @@ class GUI():
         
         return pickled_game,player_index # type:ignore
     
+    def win(self,winner_list: list[int]):
+        pot = self.game.empty_pot()
+        for player in self.game.get_players():
+                pot += player.get_curr_bet()
+        
+        for winner_index in winner_list:
+            self.game.get_players()[winner_index].change_money(pot // len(winner_list)) # Transfer money in the pot into winner's money
     
-    def update_gui(self,green:bool = False):
+    def update_gui(self,winner_index_list:list[int] = []):
         # Show pot
         ariel = pygame.font.SysFont("Ariel",22)
         self.screen.blit(ariel.render(str(self.game.get_pot()) + '$',False,(255,255,255),(220,0,0)),(465,177))
@@ -205,7 +212,7 @@ class GUI():
             try:
                 if self.game.get_players()[i].is_playing():
                     bet_color = (255,255,0)
-                    if green:
+                    if i in winner_index_list:
                         color = (0,255,0)
                     else:
                         

@@ -212,8 +212,11 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
                 broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
                 finish = True
                 continue
-            game.calculate_winners()
-            broadcast(sock,game.get_players(),b'WINNER',tid)
+            winner_list = game.calculate_winners()
+            to_send = b'WINNER'
+            for winner in winner_list:
+                to_send += b'~' + str(winner).encode()
+            broadcast(sock,game.get_players(),to_send,tid)
             
             
             broadcast(sock,game.get_players(),b'EXIT',tid)

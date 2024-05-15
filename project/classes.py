@@ -11,7 +11,8 @@ import random
 import pygame
 from PIL import Image
 from platform import system
-
+from treys import Card as tCard
+from treys import Evaluator
 #check if run on windows or mac
 
 
@@ -52,8 +53,11 @@ class Card:
     def __repr__(self) -> str:
         return str(self.__num) + self.__suit
 
-
-
+    def to_tCard(self) -> int:
+        st_arr = ['A','2','3','4','5','6','7','8','9','T','J','Q','K']
+        st = st_arr[self.__num - 1] + self.__suit.lower()
+        return tCard.new(st)
+        
     def get_suit(self) -> str:
         return self.__suit
 
@@ -178,6 +182,34 @@ class Player:
     def set_curr_bet(self,amount:int):
         self.__current_bet = amount
     
+    # def get_hand_score(self,community_cards: list[Card]) -> tuple[int,Card]:
+    #     """Considering player hole cards and the games community cards, return a score representing the best hand of this player.
+
+    #     Straight flush - 0
+    #     Four of a kind - 1
+    #     Full house - 2
+    #     Flush - 3
+    #     Straight - 4
+    #     Three of a kind - 5
+    #     two pair - 6
+    #     pair - 7
+    #     high card - 8
+        
+    #     Args:
+    #         community_cards (list[Card]): 5 cards.
+
+    #     Returns:
+    #         tuple[int,int]: first int according to the score table, second representing the kicker
+    #     """
+        
+    #     card_list = list(self.__hand) + community_cards # type:ignore
+    
+    # @staticmethod
+    # def straight_flush(cards):
+        
+    
+    
+    
 class Game:
     def __init__(self,player_arr :list[Player] | None = None,blinds: tuple[int,int] = (5,10)) -> None:
         if player_arr is None:
@@ -269,8 +301,25 @@ class Game:
     def show_river(self):
         self.__community_cards.append(self.__deck.draw_card())
     
-    def calculate_winners(self):
-        print(" One of the players won")
+    def calculate_winners(self) ->  list[int]:
+        """Calculate best hand.
+
+        Returns:
+            list[int]: list of all the indexes with the best hand
+        """
+        eval = Evaluator()
+        all_cards = [card.to_tCard() for card in list(self.__players[0].get_hand()) + self.__community_cards]
+        best_hand = eval.evaluate(all_cards[:2],all_cards[2:]) 
+        index_list = []
+        for i in range(len(self.__players)):
+            all_cards = [card.to_tCard() for card in list(self.__players[i].get_hand()) + self.__community_cards]
+            curr_hand = eval.evaluate(all_cards[:2],all_cards[2:]) 
+            if best_hand > curr_hand:
+                best_hand = curr_hand
+                index_list = [i]
+            if best_hand == curr_hand and best_hand != 0:
+                index_list.append(i)
+        return list(set(index_list))
     
     def get_blind(self,big: bool | int) -> int:
         if big:
