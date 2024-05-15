@@ -61,7 +61,10 @@ class GUI():
                 # Prepare the next round of betting
                 self.game.set_bet_size(0)
                 for player in self.game.get_players():
+                    self.game.change_pot(player.get_curr_bet())
                     player.set_curr_bet(0)
+                    
+                
             if code == b'MOVE':
                 self.do_move(from_server) #type:ignore
             if code == b'TURN': # Input player move
@@ -81,6 +84,7 @@ class GUI():
                         # If left click is pressed - check where player clicked.
                         if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
                             pos = pygame.mouse.get_pos()
+                            print(pos)
                             
                             distance_from_check = sub_tuple(pos,CHECK_POS)
                             if distance_from_check[0] < 35 and distance_from_check[1] < 35:
@@ -95,8 +99,9 @@ class GUI():
                                 # Need to chose how much to bet.
                                 if not show_bet_menu:
                                     show_bet_menu = True
-                                    self.amount = self.min_bet = self.game.get_bet_size()
+                                    self.min_bet = self.game.get_bet_size()
                                     self.max_bet = self.player.get_money()
+                                    self.amount = max(self.min_bet * 2,self.game.get_blind(True))
                                     self.show_bet_menu()
                                 else:
                                     show_bet_menu = False
@@ -108,14 +113,12 @@ class GUI():
                                 distance_from_plus = sub_tuple(pos,PLUS_POS)
                                 if distance_from_minus[0] < 25 and distance_from_minus[1] < 25:
                                     # Minus pressed
-                                    self.amount -= max(self.min_bet,self.game.get_blind(False))
-                                    print("minus")
+                                    self.amount -= max(self.min_bet,self.game.get_blind(True))
                                 elif distance_from_plus[0] < 25 and distance_from_plus[1] < 25:
                                     # Plus pressed
-                                    self.amount += max(self.min_bet,self.game.get_blind(False))
-                                    print("plus")
+                                    self.amount += max(self.min_bet,self.game.get_blind(True))
                                 self.amount = min(max(self.amount,self.min_bet),self.max_bet) # Makes sure that min_bet <= amount <= max_bet
-                                ariel = pygame.font.SysFont("Ariel",22)
+                                ariel = pygame.font.SysFont("Ariel",30)
                                 self.screen.blit(ariel.render(str(self.amount) + '$',False,(255,255,255),(0,0,0)),(55,450))
                                 
                                 pygame.display.flip()
@@ -169,12 +172,18 @@ class GUI():
         name_loc = name_loc[5 - self.index:] + name_loc[:5 - self.index] # Rotate list 
         money_loc = [(445,298),(276,302),(269, 141),(685, 140),(705, 303)]
         money_loc = money_loc[5 - self.index:] + money_loc[:5 - self.index]
+        bet_loc = [(509, 279),(334, 254),(379, 191),(642, 202),(637, 268)]
+        bet_loc = bet_loc[5 - self.index:] + bet_loc[:5 - self.index]
         
         for i in range(self.index,self.index + 5):
             i %= 5
             try:
                 self.screen.blit(ariel.render(self.game.get_players()[i].get_name(),False,(255,255,255),(0,0,0)),name_loc[i])
                 self.screen.blit(ariel.render(str(self.game.get_players()[i].get_money()) + '$',False,(255,255,255),(220,0,0)),money_loc[i])
+                if self.game.get_players()[i].get_curr_bet():
+                    self.screen.blit(ariel.render(str(self.game.get_players()[i].get_curr_bet()) + '$',False,(0,255,0),(220,0,0)),bet_loc[i])
+                else:
+                    self.screen.blit(ariel.render("         ",False,(0,255,0)),bet_loc[i])
             except Exception as e:
                 pass
         pygame.display.flip()
@@ -236,7 +245,6 @@ class GUI():
             amount = int(move_number) - self.game.get_players()[int(p_index)].get_curr_bet()
             self.game.get_players()[int(p_index)].change_money(-amount)
             self.game.get_players()[int(p_index)].set_curr_bet(int(move_number))
-            self.game.change_pot(amount)
             self.game.set_bet_size(int(move_number))
         
         #TODO garphics
@@ -289,10 +297,6 @@ class GUI():
                                 
         pygame.display.flip()
     
-    def bet(self,amount: int):
-        """wrapper for send_data_ack statement
-        """
-        send_data_ack(self.sock,b'MOVE~' + str(amount).encode(),self.ADDR,"MOVE")
 
 
 

@@ -151,7 +151,6 @@ def blinds(game: Game):
         game (Game): _description_
     """
     s,b = game.get_blind(False),game.get_blind(True)
-    game.change_pot(s + b)
     game.get_players()[0].change_money(-s)
     game.get_players()[1].change_money(-b)
     game.set_bet_size(b)
