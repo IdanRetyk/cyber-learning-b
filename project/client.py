@@ -63,8 +63,15 @@ class GUI():
                 for player in self.game.get_players():
                     self.game.change_pot(player.get_curr_bet())
                     player.set_curr_bet(0)
-                    
-                
+                # Delete in gui players bet
+                for i in range(self.index,self.index + 5):
+                    i %= 5
+                    try:
+                        self.game.get_players()[i] 
+                        ariel = pygame.font.SysFont("Ariel",22)
+                        self.screen.blit(ariel.render("       ",False,(255,255,0),(220,0,0)),self.bet_loc[i])
+                    except:
+                        pass
             if code == b'MOVE':
                 self.do_move(from_server) #type:ignore
             if code == b'TURN': # Input player move
@@ -173,17 +180,20 @@ class GUI():
         money_loc = [(445,298),(276,302),(269, 141),(685, 140),(705, 303)]
         money_loc = money_loc[5 - self.index:] + money_loc[:5 - self.index]
         bet_loc = [(509, 279),(334, 254),(379, 191),(642, 202),(637, 268)]
-        bet_loc = bet_loc[5 - self.index:] + bet_loc[:5 - self.index]
+        self.bet_loc = bet_loc[5 - self.index:] + bet_loc[:5 - self.index]
         
         for i in range(self.index,self.index + 5):
             i %= 5
             try:
-                self.screen.blit(ariel.render(self.game.get_players()[i].get_name(),False,(255,255,255),(0,0,0)),name_loc[i])
-                self.screen.blit(ariel.render(str(self.game.get_players()[i].get_money()) + '$',False,(255,255,255),(220,0,0)),money_loc[i])
-                if self.game.get_players()[i].get_curr_bet():
-                    self.screen.blit(ariel.render(str(self.game.get_players()[i].get_curr_bet()) + '$',False,(0,255,0),(220,0,0)),bet_loc[i])
+                if self.game.get_players()[i].is_playing():
+                    color = (255,255,255) # White
                 else:
-                    self.screen.blit(ariel.render("         ",False,(0,255,0),(220,0,0)),bet_loc[i])
+                    color = (100,100,100) # Grey
+                
+                self.screen.blit(ariel.render(self.game.get_players()[i].get_name(),False,color,(0,0,0)),name_loc[i])
+                self.screen.blit(ariel.render(str(self.game.get_players()[i].get_money()) + '$',False,color,(220,0,0)),money_loc[i])
+                if self.game.get_players()[i].get_curr_bet(): # Player bet
+                    self.screen.blit(ariel.render(str(self.game.get_players()[i].get_curr_bet()) + '$',False,(255,255,0),(220,0,0)),self.bet_loc[i])
             except Exception as e:
                 pass
         pygame.display.flip()
@@ -236,19 +246,24 @@ class GUI():
         than show in gui the move.
         """
         code,move_number,p_index = move.split(b'~')
+        
+        curr_player = self.game.get_players()[int(p_index)]
+        
         if move_number == b'0':
             type_ = "check"
+            ariel = pygame.font.SysFont("Ariel",22)
+            self.screen.blit(ariel.render("V    ",False,(0,0,255),(220,0,0)),self.bet_loc[int(p_index)])
         elif move_number == b'-1':
             type_ = "fold"
+            curr_player.fold()
         else:
             type_ = "bet" # Or call
-            amount = int(move_number) - self.game.get_players()[int(p_index)].get_curr_bet()
-            self.game.get_players()[int(p_index)].change_money(-amount)
-            self.game.get_players()[int(p_index)].set_curr_bet(int(move_number))
+            amount = int(move_number) - curr_player.get_curr_bet()
+            curr_player.change_money(-amount)
+            curr_player.set_curr_bet(int(move_number))
             self.game.set_bet_size(int(move_number))
         
-        #TODO garphics
-        print(move)
+        pygame.display.flip()
     
     def show_button(self,button_str: str):
         if "check" in button_str:
