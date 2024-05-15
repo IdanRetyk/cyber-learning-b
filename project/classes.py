@@ -211,9 +211,22 @@ class Game:
     def __repr__(self) -> str:
         return f"players - {self.__players}, pot - {self.__pot}"
     
+    def get_winner(self) -> int:
+        """Search for winner mid-game.
+        a winner is the last player who hasn't folded yet.
+
+        Returns:
+            int: -1 if there is no winner yet. if there is a winner return index.
+        """
+        if self.players_in_game() != 1:
+            return -1
+        for i in range(len(self.__players)):
+            if self.__players[i].is_playing():
+                return i
+        return -1
+    
     def does_player_exist(self,addr):
         return addr in self.get_addresses_list()
-    
     
     def players_in_game(self) -> int:
         return len(list(filter(Player.is_playing,self.__players)))
@@ -236,6 +249,11 @@ class Game:
         
     def get_pot(self) -> int:
         return self.__pot
+    
+    def empty_pot(self) ->int:
+        pot = self.__pot
+        self.__pot = 0
+        return pot
     
     def get_addresses_list(self) -> list[tuple[str,int]]:
         """return list of player's addresses"""

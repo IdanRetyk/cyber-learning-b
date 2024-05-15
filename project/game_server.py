@@ -16,7 +16,7 @@ from classes import *
 all_to_die = False
 
 LOCK = threading.Lock()
-PLAYER_COUNT = 3
+PLAYER_COUNT = 2
 OPEN_NEW_GAME: bool = True # When this var is true, any new client that connects will start a new game
                             #if its false, new client will be send to an already existing waiting room
 
@@ -94,10 +94,12 @@ def waiting_room(sock: socket.socket, data: bytes,addr,tid: str) -> Game:
 
 
 
-def do_betting_round(sock: socket.socket,game: Game,turn: int,tid: str):
+def do_betting_round(sock: socket.socket,game: Game,turn: int,tid: str) -> int:
     count = 0
     addr_list = game.get_addresses_list()
     while count < len(game.get_players()): 
+        if game.players_in_game() == 1:
+            return game.get_winner()
         if game.get_players()[turn].is_playing():
             send_data_ack(sock,f"TURN~{game.get_bet_size()}".encode(),addr_list[turn],"MOVE")
             from_player,a = recv_ack(sock,"MOVE",[addr_list[turn]])
@@ -111,8 +113,9 @@ def do_betting_round(sock: socket.socket,game: Game,turn: int,tid: str):
             count += 1
         turn += 1
         turn %= PLAYER_COUNT
-        
+    
     game.set_bet_size(0)
+    return game.get_winner()
 
 
 
@@ -144,7 +147,7 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
     
     # Send each player the game object, with their index in the player array
     recv_arr: list[bool] = [False] * PLAYER_COUNT
-    while False in recv_arr: # Until everyclient sent ack
+    while False in recv_arr: # Until every client sent ack
         for i in range(PLAYER_COUNT):
             if not recv_arr[i]:
                 p = p_arr[i]
@@ -171,28 +174,44 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
             
             # Preflop betting
             turn = 2 % PLAYER_COUNT
-            do_betting_round(sock,game,turn,tid)
+            possible_winner = do_betting_round(sock,game,turn,tid)
+            if possible_winner != -1: # There is a winner
+                broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
+                finish = True
+                continue
             game.show_flop()
             broadcast(sock,game.get_players(),b'CARDS~' + b64encode(pickle.dumps(game.get_community_cards())),tid)
             
             
             # Flop betting
             turn = 0
-            do_betting_round(sock,game,turn,tid)
+            possible_winner = do_betting_round(sock,game,turn,tid)
+            if possible_winner != -1: # There is a winner
+                broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
+                finish = True
+                continue
             game.show_turn()
             broadcast(sock,game.get_players(),b'CARDS~' + b64encode(pickle.dumps(game.get_community_cards())),tid)
             
             
             # Turn betting
             turn = 0
-            do_betting_round(sock,game,turn,tid)
+            possible_winner = do_betting_round(sock,game,turn,tid)
+            if possible_winner != -1: # There is a winner
+                broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
+                finish = True
+                continue
             game.show_river()
             broadcast(sock,game.get_players(),b'CARDS~' + b64encode(pickle.dumps(game.get_community_cards())),tid)
             
             
             # River betting
             turn = 0
-            do_betting_round(sock,game,turn,tid)
+            possible_winner = do_betting_round(sock,game,turn,tid)
+            if possible_winner != -1: # There is a winner
+                broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
+                finish = True
+                continue
             game.calculate_winners()
             broadcast(sock,game.get_players(),b'WINNER',tid)
             
@@ -203,6 +222,11 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
             if finish:
                 time.sleep(1)
                 break
+        except KeyboardInterrupt:
+            broadcast(sock,game.get_players(),b'EXIT',tid)
+            finish = True
+            sock.close()
+            raise KeyboardInterrupt()
         except socket.error as err:
             print(f'Socket Error exit client loop: err:  {err}')
             break
