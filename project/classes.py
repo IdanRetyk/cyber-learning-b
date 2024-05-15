@@ -128,7 +128,7 @@ class Player:
         self.__current_bet: int = 0
         
     def __repr__(self) -> str:
-        return f"addr - {self.__addr}, pos - { self.__pos}, {type(self.__money) =}"
+        return f" bet - {self.__current_bet}"
     
     
     def set_addr(self, addr: tuple[str,int]):
@@ -207,6 +207,9 @@ class Game:
         for player in self.__players:
             player.set_hand((self.__deck.draw_card(),self.__deck.draw_card()))
     
+    
+    def __repr__(self) -> str:
+        return f"players - {self.__players}, pot - {self.__pot}"
     
     def does_player_exist(self,addr):
         return addr in self.get_addresses_list()

@@ -16,7 +16,7 @@ from classes import *
 all_to_die = False
 
 LOCK = threading.Lock()
-PLAYER_COUNT = 2
+PLAYER_COUNT = 3
 OPEN_NEW_GAME: bool = True # When this var is true, any new client that connects will start a new game
                             #if its false, new client will be send to an already existing waiting room
 
@@ -47,7 +47,7 @@ def handle_move(from_player: bytes,player_position: int,game : Game) -> tuple[by
     if fields[1] == b'0' :# Check
         return f"MOVE~0~{player_position}".encode(),"check"
     else: 
-        if int(fields[1]) == game.get_bet_size(): # Call
+        if int(fields[1]) <= game.get_bet_size(): # Call/All in
             game.change_pot(int(fields[1]))
             game.get_players()[player_position].change_money(-int(fields[1]))
             game.get_players()[player_position].set_curr_bet(int(fields[1]))
@@ -97,17 +97,21 @@ def waiting_room(sock: socket.socket, data: bytes,addr,tid: str) -> Game:
 def do_betting_round(sock: socket.socket,game: Game,turn: int,tid: str):
     count = 0
     addr_list = game.get_addresses_list()
-    while count < game.players_in_game(): 
-        send_data_ack(sock,f"TURN~{game.get_bet_size()}".encode(),addr_list[turn],"MOVE")
-        from_player,a = recv_ack(sock,"MOVE",[addr_list[turn]])
-        to_broadcast,move_type = handle_move(from_player,turn,game)
-        if move_type == 'bet':
-            count = 1
+    while count < len(game.get_players()): 
+        if game.get_players()[turn].is_playing():
+            send_data_ack(sock,f"TURN~{game.get_bet_size()}".encode(),addr_list[turn],"MOVE")
+            from_player,a = recv_ack(sock,"MOVE",[addr_list[turn]])
+            to_broadcast,move_type = handle_move(from_player,turn,game)
+            broadcast(sock,game.get_players(),to_broadcast,tid,addr_list)
+            if move_type == 'bet':
+                count = 1
+            else:
+                count += 1
         else:
             count += 1
         turn += 1
         turn %= PLAYER_COUNT
-        broadcast(sock,game.get_players(),to_broadcast,tid,addr_list)
+        
     game.set_bet_size(0)
 
 
@@ -158,7 +162,6 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
     blinds(game)
     
     
-    # TODO implement main game loop
     finish = False
     while not finish:
         if all_to_die:

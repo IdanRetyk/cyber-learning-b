@@ -47,6 +47,7 @@ class GUI():
         blinds(self.game)
         
         while not finish:
+            print(self.game)
             self.update_gui()
             
             from_server,_ = recv_ack(self.sock,["MOVE","TURN","CARDS","EXIT"])
@@ -91,14 +92,23 @@ class GUI():
                         # If left click is pressed - check where player clicked.
                         if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
                             pos = pygame.mouse.get_pos()
-                            print(pos)
                             
+                            # Check if pressed X
+                            distance_from_x = sub_tuple(pos,X_POS)
+                            if distance_from_x[0] < 35 and distance_from_x[1] < 35:
+                                # X
+                                to_send = b"MOVE~-1"
+                                break
+                            
+                            
+                            # Check if pressed check/call
                             distance_from_check = sub_tuple(pos,CHECK_POS)
                             if distance_from_check[0] < 35 and distance_from_check[1] < 35:
                                 # CHECK,CALL 
                                 to_send = b'MOVE~' + str(self.game.get_bet_size()).encode()
                                 break                   
                             
+                            # Check if pressed bet/raise
                             distance_from_bet = sub_tuple(pos,BET_POS)
                             if distance_from_bet[0] < 35 and distance_from_bet[1] < 35:
                                 # Bet
@@ -115,7 +125,6 @@ class GUI():
                                     to_send = f'MOVE~{self.amount}~{self.index}'.encode()
                             
                             if show_bet_menu:
-                                
                                 distance_from_minus = sub_tuple(pos,MINUS_POS)
                                 distance_from_plus = sub_tuple(pos,PLUS_POS)
                                 if distance_from_minus[0] < 25 and distance_from_minus[1] < 25:
@@ -246,7 +255,7 @@ class GUI():
         than show in gui the move.
         """
         code,move_number,p_index = move.split(b'~')
-        
+        print(move)
         curr_player = self.game.get_players()[int(p_index)]
         
         if move_number == b'0':
@@ -283,12 +292,19 @@ class GUI():
             impact = pygame.font.SysFont('Verdana', 50)
             self.screen.blit(impact.render('X', False, (128, 0, 0)), (852,415))
         
-        if "bet" in button_str or "raise" in button_str: # TODO separate this
+        if "bet" in button_str:
             pygame.draw.circle(self.screen,(255,215,0),BET_POS,40)
             pygame.draw.circle(self.screen, (240, 176, 0),BET_POS,33,5)
 
             impact = pygame.font.SysFont('IMPACT', 30)
             self.screen.blit(impact.render('BET', False, (110, 82, 35)), (950, 427))
+        
+        if "raise" in button_str:
+            pygame.draw.circle(self.screen,(255,215,0),BET_POS,40)
+            pygame.draw.circle(self.screen, (240, 176, 0),BET_POS,33,5)
+
+            impact = pygame.font.SysFont('IMPACT', 26)
+            self.screen.blit(impact.render('RAISE', False, (110, 82, 35)), (950, 427))
         
         pygame.display.flip()
         
