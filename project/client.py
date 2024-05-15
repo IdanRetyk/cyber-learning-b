@@ -183,7 +183,7 @@ class GUI():
                 if self.game.get_players()[i].get_curr_bet():
                     self.screen.blit(ariel.render(str(self.game.get_players()[i].get_curr_bet()) + '$',False,(0,255,0),(220,0,0)),bet_loc[i])
                 else:
-                    self.screen.blit(ariel.render("         ",False,(0,255,0)),bet_loc[i])
+                    self.screen.blit(ariel.render("         ",False,(0,255,0),(220,0,0)),bet_loc[i])
             except Exception as e:
                 pass
         pygame.display.flip()
