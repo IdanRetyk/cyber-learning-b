@@ -60,7 +60,9 @@ class GUI():
                 if code == b'GAME': # New game
                     _,pickleld_game,player_index = fields
                     self.game : Game = pickle.loads(b64decode(pickleld_game))
-                    self.player = self.game.get_players()[int(player_index)]
+                    self.index = int(player_index)
+                    self.player = self.game.get_players()[self.index]
+                    
                     self.load_images()
                     self.pos = self.player.get_position()
                     blinds(self.game)
@@ -219,6 +221,7 @@ class GUI():
         return pickled_game,player_index # type:ignore
     
     def win(self,winner_list: list[int],show_cards:bool = False):
+        
         pot = self.game.empty_pot()
         for player in self.game.get_players():
             pot += player.get_curr_bet()
