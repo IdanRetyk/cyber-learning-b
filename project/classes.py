@@ -132,7 +132,7 @@ class Player:
         self.__current_bet: int = 0
         
     def __repr__(self) -> str:
-        return f" bet - {self.__current_bet}"
+        return f" bet - {self.__current_bet}, money - {self.__money}"
     
     def restart(self,player_count):
         self.__pos += 1
@@ -257,7 +257,7 @@ class Game:
         self.__bet_size = 0
         for player in self.__players:
             player.restart(player_count)
-        self.__players = self.__players[:-1] + [self.__players[-1]]
+        self.__players = [self.__players[-1]] + self.__players[:-1] 
         self.__deal_cards()
 
 

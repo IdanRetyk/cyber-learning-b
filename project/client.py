@@ -30,9 +30,9 @@ class GUI():
             
             self.index = int(player_index) # self.index is the player index within self.game.get_players()
             
-            pygame.mixer.init()
-            pygame.mixer.music.load( PIC_FOLDER + "music.mp3")
-            pygame.mixer.music.play()
+            # pygame.mixer.init()
+            # pygame.mixer.music.load( PIC_FOLDER + "music.mp3")
+            # pygame.mixer.music.play()
 
 
             # When getting to this point, the last message sent is "game" message, .
@@ -63,6 +63,7 @@ class GUI():
                     self.player = self.game.get_players()[int(player_index)]
                     self.load_images()
                     self.pos = self.player.get_position()
+                    blinds(self.game)
                     continue
                 if code == b'EXIT':
                     finish = True
@@ -76,13 +77,9 @@ class GUI():
                         pygame.display.flip()
                     else:
                         winner_list = [int(f) for f in fields[1:]]
-
                         self.win(winner_list)
+
                     
-                    # Add all bets to pot
-                    for player in self.game.get_players():
-                        self.game.change_pot(player.get_curr_bet())
-                        player.set_curr_bet(0)
                     self.update_gui(winner_list)
                     time.sleep(5)
                     
@@ -175,14 +172,15 @@ class GUI():
                                     
                     self.delete_buttons()
                     send_data_ack(self.sock,to_send,self.ADDR,None) #type:ignore
+        except Exception as e:
+            print(e)
         finally:
             print("finally block")
             send_data_ack(self.sock,b'EXIT',self.ADDR)
         pygame.quit()
         self.sock.close()
     
-    def restart(self):
-        self.game.restart()
+
 
 
     def client_hello(self) ->tuple[bytes,bytes]:
@@ -223,7 +221,8 @@ class GUI():
     def win(self,winner_list: list[int],show_cards:bool = False):
         pot = self.game.empty_pot()
         for player in self.game.get_players():
-                pot += player.get_curr_bet()
+            pot += player.get_curr_bet()
+            player.set_curr_bet(0)
         
         cards_loc = [((340,435),(355,435)),((280,250),(260,250)),
                     ((300,160),(280,160)),((700,160),(720,160)),((740,250),(720,250))]

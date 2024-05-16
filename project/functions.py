@@ -106,6 +106,9 @@ def udp_recv(sock: socket.socket,expected_codes: list[str] | str = [],expected_a
     return msg, addr
 
 
+
+
+
 def sub_tuple(tuple1: tuple[int, int], tuple2: tuple[int, int]) -> tuple[int, ...]:
     return tuple([abs(a - b) for a, b in zip(tuple1, tuple2)])
 

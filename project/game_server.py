@@ -130,6 +130,31 @@ def do_betting_round(sock: socket.socket,game: Game,turn: int,tid: str) -> int:
 
 
 
+def handle_win(game: Game,winner_list : list[int],show_cards: bool = False):
+    """Give winners the pot.
+
+    Args:
+        game (Game): _description_
+        winner_list (list[int]): _description_
+        show_cards (bool, optional): _description_. Defaults to False.
+    """
+    pot = game.empty_pot()
+    for player in game.get_players():
+        pot += player.get_curr_bet()
+        player.set_curr_bet(0)
+
+    for winner_index in winner_list:
+        game.get_players()[winner_index].change_money(pot // len(winner_list)) # Transfer money in the pot into winner's money
+
+
+def restart(sock: socket.socket,game: Game):
+    game.restart(PLAYER_COUNT)
+    pickled_game =  b64encode(pickle.dumps(game))
+    print(pickle.loads(b64decode(pickled_game)))
+    for i in range(len(game.get_players())):
+        send_data_ack(sock,f'GAME~{pickled_game.decode()}~{i}'.encode(),game.get_addresses_list()[i],"MOVE")
+    blinds(game)
+
 
 
 def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
@@ -193,6 +218,8 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
                 continue
             if possible_winner != -1: # There is a winner
                 broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
+                handle_win(game,[possible_winner],show_cards=True)
+                restart(sock,game)
                 continue
             
             game.show_flop()
@@ -208,6 +235,8 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
                 continue
             if possible_winner != -1: # There is a winner
                 broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
+                handle_win(game,[possible_winner],show_cards=True)
+                restart(sock,game)
                 continue
             game.show_turn()
             broadcast(sock,game.get_players(),b'CARDS~' + b64encode(pickle.dumps(game.get_community_cards())),tid)
@@ -222,6 +251,8 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
                 continue
             if possible_winner != -1: # There is a winner
                 broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
+                handle_win(game,[possible_winner],show_cards=True)
+                restart(sock,game)
                 continue
             game.show_river()
             broadcast(sock,game.get_players(),b'CARDS~' + b64encode(pickle.dumps(game.get_community_cards())),tid)
@@ -236,6 +267,7 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
                 continue
             if possible_winner != -1: # There is a winner
                 broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
+                restart(sock,game)
                 continue
 
             winner_list = game.calculate_winners()
@@ -243,15 +275,9 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
             for winner in winner_list:
                 to_send += b'~' + str(winner).encode()
             broadcast(sock,game.get_players(),to_send,tid)
+            handle_win(game,winner_list,show_cards=True)
             
-            # Restart
-            game.restart(PLAYER_COUNT)
-            pickled_game =  b64encode(pickle.dumps(game))
-            print(pickle.loads(b64decode(pickled_game)))
-            for i in range(len(game.get_players())):
-                send_data_ack(sock,f'GAME~{pickled_game.decode()}~{i}'.encode(),game.get_addresses_list()[i],"MOVE")
-            
-            
+            restart(sock,game)
 
         except KeyboardInterrupt:
             broadcast(sock,game.get_players(),b'EXIT',tid)
