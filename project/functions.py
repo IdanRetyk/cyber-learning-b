@@ -3,6 +3,7 @@ This file contains all general function, related to networking
 """
 
 import socket
+import time
 from classes import *
 from game_server import PLAYER_COUNT
 
@@ -45,13 +46,17 @@ def send_data_ack(sock: socket.socket,bdata: bytes,addr,exit_code: str | None = 
 
 
 def recv_ack(sock: socket.socket,expected_codes : list[str] | str = "ACK",expected_addrs: list[tuple[str,int]] = []) -> tuple[bytes, tuple[str, int]]:
+    start = time.time()
     if isinstance(expected_codes,str):
         expected_codes = [expected_codes]
+    expected_codes.append("EXIT")
     data,a = udp_recv(sock,expected_codes,expected_addrs)
     msg = data
     if data != None:
         send_data(sock,b'ACK',a)
     while data == None:
+        if time.time() - start > 15: # Client disconnected.
+            return b'EXIT',("127.0.0.1",1) 
         data,a = udp_recv(sock,expected_codes,expected_addrs)
         if data is not None:
             msg = data

@@ -5,7 +5,6 @@ from PIL import Image
 
 from classes import PIC_FOLDER,Card,Game,Player
 from functions import *
-from game_server import PLAYER_COUNT
 
 WINDOW_WIDTH = 1024
 WINDOW_HEIGHT = 500
@@ -17,154 +16,185 @@ X_POS :tuple[int,int] = (870,445)
 PLUS_POS: tuple[int,int] = (30,450)
 MINUS_POS: tuple[int,int] = (100,450)
 
-
+DEUBG: bool = True
 
 class GUI():
     def __init__(self,ip) -> None:
-        finish = False
-        self.sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        try:
+            finish = False
+            self.sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
-        self.ADDR = (ip,1235)
-        
-        pickleld_game,player_index = self.client_hello()
-        
-        self.index = int(player_index) # self.index is the player index within self.game.get_players()
-        
-        # When getting to this point, the last message sent is "game" message, .
-        self.game : Game = pickle.loads(b64decode(pickleld_game))
-        self.player = self.game.get_players()[int(player_index)]
-        
-        d,_ = recv_ack(self.sock,"GAME") # Until changing client hello this line is necessary for some reason
-        # Handshake complete, ready to start game
+            self.ADDR = (ip,1235)
+            
+            pickleld_game,player_index = self.client_hello()
+            
+            self.index = int(player_index) # self.index is the player index within self.game.get_players()
+            
+            pygame.mixer.init()
+            pygame.mixer.music.load( PIC_FOLDER + "music.mp3")
+            pygame.mixer.music.play()
 
-        size = (WINDOW_WIDTH, WINDOW_HEIGHT)
-        self.screen = pygame.display.set_mode(size)
-        pygame.display.set_caption("Game")
-        
-        self.load_images()        
-        self.pos = self.player.get_position()
-        
-        blinds(self.game)
-        
-        while not finish:
-            self.update_gui()
+
+            # When getting to this point, the last message sent is "game" message, .
+            self.game : Game = pickle.loads(b64decode(pickleld_game))
+            self.player = self.game.get_players()[int(player_index)]
             
-            from_server,_ = recv_ack(self.sock,["MOVE","TURN","CARDS","EXIT","WINNER"])
-            fields = from_server.split(b'~') #type:ignore
-            code = fields[0]
-            if code == b'EXIT':
-                finish = True
-                continue
-            if code == b'WINNER':
-                winner_list = [int(f) for f in fields[1:]]
-                
-                self.win(winner_list)
+            d,_ = recv_ack(self.sock,"GAME") # Until changing client hello this line is necessary for some reason
+            # Handshake complete, ready to start game
+
+            size = (WINDOW_WIDTH, WINDOW_HEIGHT)
+            self.screen = pygame.display.set_mode(size)
+            pygame.display.set_caption("Game")
             
-                finish = True
+            self.load_images()        
+            self.pos = self.player.get_position()
+            
+            blinds(self.game)
+        
+            while not finish:
+                self.update_gui()
                 
-                # Add all bets to pot
-                for player in self.game.get_players():
-                    self.game.change_pot(player.get_curr_bet())
-                    player.set_curr_bet(0)
-                self.update_gui(winner_list)
-                time.sleep(5)
-                
-                continue
-            if code == b'CARDS':
-                # Show cards
-                self.show_community_cards(pickle.loads(b64decode(fields[1])))
-                # Prepare the next round of betting
-                self.game.set_bet_size(0)
-                for player in self.game.get_players():
-                    self.game.change_pot(player.get_curr_bet())
-                    player.set_curr_bet(0)
-                # Delete in gui players bet
-                for i in range(self.index,self.index + 5):
-                    i %= 5
-                    try:
-                        self.game.get_players()[i] 
-                        ariel = pygame.font.SysFont("Ariel",22)
-                        self.screen.blit(ariel.render("       ",False,(255,255,0),(220,0,0)),self.bet_loc[i])
-                    except:
-                        pass
-            if code == b'MOVE':
-                self.do_move(from_server) #type:ignore
-            if code == b'TURN': # Input player move
-                to_send: bytes = b"Undefined"
-                show_bet_menu: bool = False
-                while to_send == b"Undefined":
-                    if fields[1] == b'0':
-                        self.show_button("xcheckbet")
+                from_server,_ = recv_ack(self.sock,["MOVE","TURN","CARDS","EXIT","WINNER","NEW","GAME"])
+                fields = from_server.split(b'~') #type:ignore
+                code = fields[0]
+                if code == b'GAME': # New game
+                    _,pickleld_game,player_index = fields
+                    self.game : Game = pickle.loads(b64decode(pickleld_game))
+                    self.player = self.game.get_players()[int(player_index)]
+                    self.load_images()
+                    self.pos = self.player.get_position()
+                    continue
+                if code == b'EXIT':
+                    finish = True
+                    continue
+                if code == b'WINNER':
+                    if fields[1] == b'END':
+                        # End of the game, should reveal cards.
+                        winner_list = [int(f) for f in fields[2:]]
+                        
+                        self.win(winner_list,show_cards=True)
+                        pygame.display.flip()
                     else:
-                        self.show_button("xraisecall")
-                        
-                    
-                    for event in pygame.event.get():
-                        if event.type == pygame.QUIT:
-                            finish = True
-                        
-                        # If left click is pressed - check where player clicked.
-                        if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
-                            pos = pygame.mouse.get_pos()
-                            
-                            # Check if pressed X
-                            distance_from_x = sub_tuple(pos,X_POS)
-                            if distance_from_x[0] < 35 and distance_from_x[1] < 35:
-                                # X
-                                to_send = b"MOVE~-1"
-                                break
-                            
-                            
-                            # Check if pressed check/call
-                            distance_from_check = sub_tuple(pos,CHECK_POS)
-                            if distance_from_check[0] < 35 and distance_from_check[1] < 35:
-                                # CHECK,CALL 
-                                to_send = b'MOVE~' + str(self.game.get_bet_size()).encode()
-                                break                   
-                            
-                            # Check if pressed bet/raise
-                            distance_from_bet = sub_tuple(pos,BET_POS)
-                            if distance_from_bet[0] < 35 and distance_from_bet[1] < 35:
-                                # Bet
-                                
-                                # Need to chose how much to bet.
-                                if not show_bet_menu:
-                                    show_bet_menu = True
-                                    self.min_bet = self.game.get_bet_size()
-                                    self.max_bet = self.player.get_money()
-                                    self.amount = max(self.min_bet * 2,self.game.get_blind(True))
-                                    self.show_bet_menu()
-                                else:
-                                    show_bet_menu = False
-                                    to_send = f'MOVE~{self.amount}~{self.index}'.encode()
-                            
-                            if show_bet_menu:
-                                distance_from_minus = sub_tuple(pos,MINUS_POS)
-                                distance_from_plus = sub_tuple(pos,PLUS_POS)
-                                if distance_from_minus[0] < 25 and distance_from_minus[1] < 25:
-                                    # Minus pressed
-                                    self.amount -= max(self.min_bet,self.game.get_blind(True))
-                                elif distance_from_plus[0] < 25 and distance_from_plus[1] < 25:
-                                    # Plus pressed
-                                    self.amount += max(self.min_bet,self.game.get_blind(True))
-                                self.amount = min(max(self.amount,self.min_bet),self.max_bet) # Makes sure that min_bet <= amount <= max_bet
-                                ariel = pygame.font.SysFont("Ariel",30)
-                                self.screen.blit(ariel.render(str(self.amount) + '$',False,(255,255,255),(0,0,0)),(55,450))
-                                
-                                pygame.display.flip()
-                                
-                                
-                self.delete_buttons()
-                send_data_ack(self.sock,to_send,self.ADDR,None) #type:ignore
+                        winner_list = [int(f) for f in fields[1:]]
 
+                        self.win(winner_list)
+                    
+                    # Add all bets to pot
+                    for player in self.game.get_players():
+                        self.game.change_pot(player.get_curr_bet())
+                        player.set_curr_bet(0)
+                    self.update_gui(winner_list)
+                    time.sleep(5)
+                    
+                    continue
+                if code == b'CARDS':
+                    # Show cards
+                    self.show_community_cards(pickle.loads(b64decode(fields[1])))
+                    # Prepare the next round of betting
+                    self.game.set_bet_size(0)
+                    for player in self.game.get_players():
+                        self.game.change_pot(player.get_curr_bet())
+                        player.set_curr_bet(0)
+                    # Delete in gui players bet
+                    for i in range(self.index,self.index + 5):
+                        i %= 5
+                        try:
+                            self.game.get_players()[i] 
+                            ariel = pygame.font.SysFont("Ariel",22)
+                            self.screen.blit(ariel.render("       ",False,(255,255,0),(220,0,0)),self.bet_loc[i])
+                        except:
+                            pass
+                if code == b'MOVE':
+                    self.do_move(from_server) #type:ignore
+                if code == b'TURN': # Input player move
+                    to_send: bytes = b"Undefined"
+                    show_bet_menu: bool = False
+                    while to_send == b"Undefined":
+                        if fields[1] == b'0':
+                            self.show_button("xcheckbet")
+                        else:
+                            self.show_button("xraisecall")
+                            
+                        
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                finish = True
+                                send_data_ack(self.sock,b'EXIT',self.ADDR,"EXIT-/'")
+                                self.sock.close()
+                                return
+                            # If left click is pressed - check where player clicked.
+                            if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
+                                pos = pygame.mouse.get_pos()
+                                
+                                # Check if pressed X
+                                distance_from_x = sub_tuple(pos,X_POS)
+                                if distance_from_x[0] < 35 and distance_from_x[1] < 35:
+                                    # X
+                                    to_send = b"MOVE~-1"
+                                    break
+                                
+                                
+                                # Check if pressed check/call
+                                distance_from_check = sub_tuple(pos,CHECK_POS)
+                                if distance_from_check[0] < 35 and distance_from_check[1] < 35:
+                                    # CHECK,CALL 
+                                    to_send = b'MOVE~' + str(self.game.get_bet_size()).encode()
+                                    break                   
+                                
+                                # Check if pressed bet/raise
+                                distance_from_bet = sub_tuple(pos,BET_POS)
+                                if distance_from_bet[0] < 35 and distance_from_bet[1] < 35:
+                                    # Bet
+                                    
+                                    # Need to chose how much to bet.
+                                    if not show_bet_menu:
+                                        show_bet_menu = True
+                                        self.min_bet = self.game.get_bet_size()
+                                        self.max_bet = self.player.get_money()
+                                        self.amount = max(self.min_bet * 2,self.game.get_blind(True))
+                                        self.show_bet_menu()
+                                    else:
+                                        show_bet_menu = False
+                                        to_send = f'MOVE~{self.amount}~{self.index}'.encode()
+                                
+                                if show_bet_menu:
+                                    distance_from_minus = sub_tuple(pos,MINUS_POS)
+                                    distance_from_plus = sub_tuple(pos,PLUS_POS)
+                                    if distance_from_minus[0] < 25 and distance_from_minus[1] < 25:
+                                        # Minus pressed
+                                        self.amount -= max(self.min_bet,self.game.get_blind(True))
+                                    elif distance_from_plus[0] < 25 and distance_from_plus[1] < 25:
+                                        # Plus pressed
+                                        self.amount += max(self.min_bet,self.game.get_blind(True))
+                                    self.amount = min(max(self.amount,self.min_bet),self.max_bet) # Makes sure that min_bet <= amount <= max_bet
+                                    ariel = pygame.font.SysFont("Ariel",30)
+                                    self.screen.blit(ariel.render(str(self.amount) + '$',False,(255,255,255),(0,0,0)),(55,450))
+                                    
+                                    pygame.display.flip()
+                                    
+                                    
+                    self.delete_buttons()
+                    send_data_ack(self.sock,to_send,self.ADDR,None) #type:ignore
+        finally:
+            print("finally block")
+            send_data_ack(self.sock,b'EXIT',self.ADDR)
         pygame.quit()
         self.sock.close()
     
+    def restart(self):
+        self.game.restart()
+
+
     def client_hello(self) ->tuple[bytes,bytes]:
         # Client Hello
         #TODO money,name in gui.
-        money = random.randint(80,120)
-        name = random.choice(["Idan","Yossi","Ophir","Emil","Alice","Bob"])
+        if DEUBG:
+            money = random.randint(80,120)
+            name = random.choice(["Idan","Yossi","Ophir","Emil","Alice","Bob"])
+        else:
+            money = input("Enter your name")
+            name = input("How much would like to invest (between 20 and 100)")
+            name = min(max(name,80),120)
         from_server = None
         while from_server is None:
             send_data(self.sock,f"HELLO~{money}~{name}".encode(),self.ADDR)
@@ -190,12 +220,22 @@ class GUI():
         
         return pickled_game,player_index # type:ignore
     
-    def win(self,winner_list: list[int]):
+    def win(self,winner_list: list[int],show_cards:bool = False):
         pot = self.game.empty_pot()
         for player in self.game.get_players():
                 pot += player.get_curr_bet()
         
+        cards_loc = [((340,435),(355,435)),((280,250),(260,250)),
+                    ((300,160),(280,160)),((700,160),(720,160)),((740,250),(720,250))]
+        cards_loc = cards_loc[5 - self.index:] + cards_loc[:5 - self.index]
+
         for winner_index in winner_list:
+            if show_cards and winner_index != self.index:
+                # Show winner's cards
+                card1,card2 = self.game.get_players()[winner_index].get_hand()
+                loc1,loc2 = cards_loc[winner_index]
+                self.screen.blit(card1.get_picture(),loc1)
+                self.screen.blit(card2.get_picture(),loc2)
             self.game.get_players()[winner_index].change_money(pot // len(winner_list)) # Transfer money in the pot into winner's money
     
     def update_gui(self,winner_index_list:list[int] = []):

@@ -1,6 +1,5 @@
 """
-This script handles login and sign up.
-After successful login db server sends client the ip of the game server.
+This server handles the actual poker.
 """
 
 import socket
@@ -8,10 +7,13 @@ import traceback
 import time
 import threading
 import pickle
-from base64 import b64encode
+from base64 import b64encode,b64decode
 
 from functions import *
 from classes import *
+
+
+
 
 all_to_die = False
 
@@ -95,6 +97,13 @@ def waiting_room(sock: socket.socket, data: bytes,addr,tid: str) -> Game:
 
 
 def do_betting_round(sock: socket.socket,game: Game,turn: int,tid: str) -> int:
+    """
+    Do betting round. Send to current player TURN msg, recieve MOVE msg and handle it, broadcast MOVE msg.
+    Will exit function when round bet is over (its the turn of the last player who bet).
+
+    Return _int_ : -1 if on player is left alone, -2 if one player exited (in that case end game).
+    oterwise return the index of the winning player.
+    """
     count = 0
     addr_list = game.get_addresses_list()
     while count < len(game.get_players()): 
@@ -103,6 +112,8 @@ def do_betting_round(sock: socket.socket,game: Game,turn: int,tid: str) -> int:
         if game.get_players()[turn].is_playing():
             send_data_ack(sock,f"TURN~{game.get_bet_size()}".encode(),addr_list[turn],"MOVE")
             from_player,a = recv_ack(sock,"MOVE",[addr_list[turn]])
+            if from_player == b'EXIT':
+                return -2
             to_broadcast,move_type = handle_move(from_player,turn,game)
             broadcast(sock,game.get_players(),to_broadcast,tid,addr_list)
             if move_type == 'bet':
@@ -167,6 +178,7 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
     
     finish = False
     while not finish:
+        
         if all_to_die:
             print('will close due to main server issue')
             break
@@ -175,10 +187,14 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
             # Preflop betting
             turn = 2 % PLAYER_COUNT
             possible_winner = do_betting_round(sock,game,turn,tid)
-            if possible_winner != -1: # There is a winner
-                broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
+            if possible_winner == -2: # Exit
+                broadcast(sock,game.get_players(),b'EXIT',tid)
                 finish = True
                 continue
+            if possible_winner != -1: # There is a winner
+                broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
+                continue
+            
             game.show_flop()
             broadcast(sock,game.get_players(),b'CARDS~' + b64encode(pickle.dumps(game.get_community_cards())),tid)
             
@@ -186,9 +202,12 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
             # Flop betting
             turn = 0
             possible_winner = do_betting_round(sock,game,turn,tid)
+            if possible_winner == -2: # Exit
+                broadcast(sock,game.get_players(),b'EXIT',tid)
+                finish = True
+                continue
             if possible_winner != -1: # There is a winner
                 broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
-                finish = True
                 continue
             game.show_turn()
             broadcast(sock,game.get_players(),b'CARDS~' + b64encode(pickle.dumps(game.get_community_cards())),tid)
@@ -197,9 +216,12 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
             # Turn betting
             turn = 0
             possible_winner = do_betting_round(sock,game,turn,tid)
+            if possible_winner == -2: # Exit
+                broadcast(sock,game.get_players(),b'EXIT',tid)
+                finish = True
+                continue
             if possible_winner != -1: # There is a winner
                 broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
-                finish = True
                 continue
             game.show_river()
             broadcast(sock,game.get_players(),b'CARDS~' + b64encode(pickle.dumps(game.get_community_cards())),tid)
@@ -208,23 +230,29 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
             # River betting
             turn = 0
             possible_winner = do_betting_round(sock,game,turn,tid)
-            if possible_winner != -1: # There is a winner
-                broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
+            if possible_winner == -2: # Exit
+                broadcast(sock,game.get_players(),b'EXIT',tid)
                 finish = True
                 continue
+            if possible_winner != -1: # There is a winner
+                broadcast(sock,game.get_players(),b'WINNER~' + str(possible_winner).encode(),tid)
+                continue
+
             winner_list = game.calculate_winners()
-            to_send = b'WINNER'
+            to_send = b'WINNER~END'
             for winner in winner_list:
                 to_send += b'~' + str(winner).encode()
             broadcast(sock,game.get_players(),to_send,tid)
             
+            # Restart
+            game.restart(PLAYER_COUNT)
+            pickled_game =  b64encode(pickle.dumps(game))
+            print(pickle.loads(b64decode(pickled_game)))
+            for i in range(len(game.get_players())):
+                send_data_ack(sock,f'GAME~{pickled_game.decode()}~{i}'.encode(),game.get_addresses_list()[i],"MOVE")
             
-            broadcast(sock,game.get_players(),b'EXIT',tid)
-            sock.close()
             
-            if finish:
-                time.sleep(1)
-                break
+
         except KeyboardInterrupt:
             broadcast(sock,game.get_players(),b'EXIT',tid)
             finish = True
@@ -236,7 +264,7 @@ def handle_game(sock: socket.socket, data: bytes, tid: str, addr):
         except Exception as  err:
             print(f'General Error %s exit client loop: {err}')
             print(traceback.format_exc())
-        break
+        
 
     print(f"Client {tid} Exit")
     sock.close()

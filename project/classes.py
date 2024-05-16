@@ -134,6 +134,12 @@ class Player:
     def __repr__(self) -> str:
         return f" bet - {self.__current_bet}"
     
+    def restart(self,player_count):
+        self.__pos += 1
+        self.__pos %= player_count
+        self.__hand = None
+        self.__folded = False
+        self.__current_bet = 0
     
     def set_addr(self, addr: tuple[str,int]):
         self.__addr = addr
@@ -243,6 +249,18 @@ class Game:
     def __repr__(self) -> str:
         return f"players - {self.__players}, pot - {self.__pot}"
     
+    def restart(self,player_count = 5):
+        self.__deck = CardDeck()
+        self.__deck.shuffle()
+        self.__community_cards = list()
+        self.__pot = 0
+        self.__bet_size = 0
+        for player in self.__players:
+            player.restart(player_count)
+        self.__players = self.__players[:-1] + [self.__players[-1]]
+        self.__deal_cards()
+
+
     def get_winner(self) -> int:
         """Search for winner mid-game.
         a winner is the last player who hasn't folded yet.
