@@ -10,5 +10,8 @@
         "MOUSEBUTTONDOWN",
         "pygame",
         "recive"
+    ],
+    "cSpell.enableFiletypes": [
+        "!markdown"
     ]
 }

@@ -308,7 +308,7 @@ def main():
     threads = []
     srv_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    srv_sock.bind(("127.0.0.1", 1235))
+    srv_sock.bind(("0.0.0.0", 1235))
 
     i = 1
     while True:

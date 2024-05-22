@@ -6,6 +6,11 @@ from PIL import Image
 from classes import PIC_FOLDER,Card,Game,Player
 from functions import *
 
+
+IP = "127.0.0.1"
+
+
+
 WINDOW_WIDTH = 1024
 WINDOW_HEIGHT = 500
 pygame.init()
@@ -92,9 +97,9 @@ class GUI():
             money = random.randint(80,120)
             name = random.choice(["Idan","Yossi","Ophir","Emil","Alice","Bob"])
         else:
-            money = input("Enter your name")
-            name = input("How much would like to invest (between 20 and 100)")
-            name = min(max(name,80),120)
+            name = input("Enter your name")
+            money = input("How much would like to invest (between 20 and 100)")
+            money = min(max(money,80),120)
         from_server = None
         while from_server is None:
             send_data(self.sock,f"HELLO~{money}~{name}".encode(),self.ADDR)
@@ -441,4 +446,4 @@ def protocol_parse_reply(reply: bytes) :
 
 
 if __name__ == "__main__":
-    GUI("127.0.0.1")
+    GUI(IP)

@@ -1,6 +1,3 @@
-'''
-author : Ophir Hoffman (yud alef 3)
-'''
 
 from PIL import Image
 import cv2
@@ -20,7 +17,6 @@ def get_ascii_char(color):
 def get_frame(pic):
     
     img = Image.fromarray(pic)
-   
 
     width, height = img.size
 
