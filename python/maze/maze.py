@@ -1,9 +1,19 @@
+from platform import system
 from PIL import Image
 from collections import deque
 import time,random
+import pathlib
 
-
-PATH = r"/Users/Idan/cyber-learning-b/maze"
+project_folder = str(pathlib.Path(__file__).parent.resolve())
+sys = system()
+if sys == "Darwin":
+    PATH = project_folder + "/"
+elif sys == "Windows":
+    PATH = project_folder + "\\"
+else:
+    PATH = ""
+    raise ValueError()
+    
 COLOR = tuple([random.randint(0,255) for _ in range(3)]) #random color
 
 class Point:
@@ -55,13 +65,10 @@ class Point:
             return False
 
         return True
-
-
-
 # end of class
 
 def load_img_as_array(image_path = PATH):
-    img = Image.open(rf"{image_path}/maze.png").convert("RGB")
+    img = Image.open(rf"{image_path}maze.png").convert("RGB")
     width, height = img.size
     pixels = img.load()
     img_arr = []
@@ -125,7 +132,7 @@ def draw_solution(link):
         pixels[key.x,key.y] = COLOR
         key = value
 
-    img.save(rf"{PATH}/solved.png")
+    img.save(rf"{PATH}solved.png")
 
 
 def main():
