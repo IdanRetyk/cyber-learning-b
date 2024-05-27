@@ -5,10 +5,13 @@ from dns_server import dns_udp_server
 from scapy.layers.inet import UDP,IP,sr1 #type :ignore
 from scapy.layers.dns import DNS,DNSQR,DNSRR
 
-import re,socket
+import re,socket,threading,pickle
 
 DNS_SERVER_IP = "127.0.0.1"
 DNS_SERVER_PORT = 53
+
+
+
 
 
 
@@ -18,12 +21,12 @@ def ns_look_up(ip):
     
     c = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
     
-    dns_query = bytes(IP(dst=DNS_SERVER_IP) / UDP(dport=53) / DNS(qdcount=1, rd=1,qd = 0)/DNSQR(qname=domain))
+    dns_query = pickle.dumps(IP(dst=DNS_SERVER_IP) / UDP(dport=53) / DNS(qdcount=1, rd=1,qd = 0)/DNSQR(qname=domain))
     
     
     c.sendto(dns_query,(DNS_SERVER_IP,DNS_SERVER_PORT))
-    
-    response = dns_udp_server(DNS_SERVER_IP,DNS_SERVER_PORT)
+    response,_ = c.recvfrom(1024)
+
     handle(response,domain)
 
         
@@ -76,4 +79,6 @@ def main():
         
 
 if __name__ == "__main__":
+    t = threading.Thread(target=dns_udp_server,args=(DNS_SERVER_IP,DNS_SERVER_PORT))
+    t.start()
     main()
