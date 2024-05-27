@@ -18,7 +18,8 @@ def ns_look_up(ip):
     
     c = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
     
-    dns_query = IP(dst=DNS_SERVER_IP) / UDP(dport=53) / DNS(qdcount=1, rd=1,qd = 0)/DNSQR(qname=domain)
+    dns_query = bytes(IP(dst=DNS_SERVER_IP) / UDP(dport=53) / DNS(qdcount=1, rd=1,qd = 0)/DNSQR(qname=domain))
+    
     
     c.sendto(dns_query,(DNS_SERVER_IP,DNS_SERVER_PORT))
     
@@ -55,7 +56,6 @@ def handle(response_packet,qname):
 
 
 def main():
-    
     while True:
         quit = False
         data = input("> ")
@@ -69,6 +69,8 @@ def main():
             data = input("> ")
             if (data.lower() in ("quit()", "exit()")):
                 quit = True
+                print()
+                return
         if (not quit):
             ns_look_up(data)
         
