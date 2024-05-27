@@ -7,7 +7,7 @@ from scapy.layers.dns import DNS,DNSQR,DNSRR
 
 import re,socket
 
-DNS_SERVER_IP = "0.0.0.0"
+DNS_SERVER_IP = "127.0.0.1"
 DNS_SERVER_PORT = 53
 
 
