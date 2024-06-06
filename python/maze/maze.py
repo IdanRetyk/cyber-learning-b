@@ -118,10 +118,7 @@ def draw_solution(link):
     #replicates the original maze            
     for i in range( img.size[0]):
         for j in range(img.size[1]):
-            if(img_arr[j][i][0] == 0):
-                pixels[i, j] = 0
-            else:
-                pixels[i, j] = (255,255,255)  
+            pixels[i, j] = img_arr[i][j]
     
     key = Point(639,0)
 
