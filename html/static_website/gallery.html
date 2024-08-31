@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Arctic - Gallery</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        img {
+            width: 200px;
+            height: auto;
+        }
+        #message {
+            margin-top: 20px;
+            font-size: 18px;
+            color: blue;
+            display: none;
+        }
+    </style>
+    <script>
+        function showText() {
+            document.getElementById("message").style.display = "block";
+        }
+    </script>
+</head>
+<body>
+
+    <h1>Arctic Gallery</h1>
+
+    <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+        <li><a href="contact.html">Contact</a></li>
+    </ul>
+
+    <h2>Gallery</h2>
+    <table>
+        <tr>
+            <td>
+                <img src="https://d1ioghyrwc6upe.cloudfront.net/cdn/ff/RSi13752gxAHUIllTSZYAWSt7QmILzNcamcpj3dEUL4/1700795184/public/inline-images/SE_Greenland.jpg" alt="Arctic Landscape 1" onclick="showText()"><br>Arctic Landscape 1
+            </td>
+            <td>
+                <img src="https://i0.wp.com/polarbearscience.com/wp-content/uploads/2023/02/Polar-animals-collage-Feb-2023.jpg?ssl=1" alt="Arctic Wildlife"><br>Arctic Wildlife
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <img src="https://discoveringthearctic.org.uk/wp-content/uploads/aurora-pink.jpg" alt="Aurora Borealis"><br>Aurora Borealis
+            </td>
+            <td>
+                <img src="https://cdn.britannica.com/06/152306-050-39E998B3/iceberg.jpg" alt="Arctic Icebergs"><br>Arctic Icebergs
+            </td>
+        </tr>
+    </table>
+    <p id="message">You clicked on the first image of the Arctic!</p>
+
+</body>
+</html>
