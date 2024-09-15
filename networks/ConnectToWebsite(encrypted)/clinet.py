@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-import socket,traceback,smtplib,ssl,random
+import socket,traceback,smtplib,ssl,random,os
 
 from email.message import EmailMessage
 from PIL import Image
@@ -341,7 +341,7 @@ def generate_key() -> bytes:
     return bytes(random.randint(0,255) for _ in range(16))
 
 def show_website():
-    img = Image.open('website.png')
+    img = Image.open(os.getcwd() + 'website.png')
     img.show()
 
 

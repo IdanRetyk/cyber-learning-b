@@ -27,7 +27,7 @@ PEPPER = "neverhackme"
 SENDER_EMAIL = 'verify.idan.python@gmail.com'
 SENDER_PASSWORD = "heeu zvaf jjgp vjnv"
 
-
+PUBLIC_KEY,PRIVATE_KEY = bytes(),bytes()
 
 
 
@@ -169,15 +169,14 @@ def AES_key_exchange(sock:socket.socket) -> bytes:
         bytes: AES key
     """
     
-    private_key, public_key = generate_keys()
-    sock.send(public_key)
+    sock.send(PUBLIC_KEY)
     
 
 
     
     enc_key = sock.recv(1024)
 
-    AES_key = PKCS1_OAEP.new(RSA.import_key(private_key)).decrypt(enc_key)
+    AES_key = PKCS1_OAEP.new(RSA.import_key(PRIVATE_KEY)).decrypt(enc_key)
     
     print("Received key:", AES_key)
     return AES_key
@@ -301,6 +300,7 @@ def handle_client(sock, tid, addr):
 def main():
     global all_to_die
     global USERS
+    global PUBLIC_KEY,PRIVATE_KEY
     """
     Main server loop
     1. accept tcp connection
@@ -320,6 +320,8 @@ def main():
     # next line release the port
     srv_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
+    PRIVATE_KEY,PUBLIC_KEY = generate_keys()
+    
     i = 1
     while True:
         print('\nMain thread: before accepting ...')
