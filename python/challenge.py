@@ -1,9 +1,2 @@
-#python challenge - currently level 14 "italy"
+#python challenge - currently level 17 : "http://www.pythonchallenge.com/pc/return/romance.html"
 
-from PIL import Image
-
-img = Image.open("python/wire.png", 'r')
-
-bytes_arr = img.load()
-
-print(bytes_arr[0,0])

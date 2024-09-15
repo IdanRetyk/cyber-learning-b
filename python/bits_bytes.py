@@ -104,7 +104,7 @@ def recv_one_message(sock):
 
     data =  __recv_amount(sock, len_int)
 
-    if len_int != len(data):
+    if len_int != len(data): #type:ignore
         data= b''
     return data
 
