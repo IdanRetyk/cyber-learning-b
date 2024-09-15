@@ -59,12 +59,12 @@ def send_data(sock, tid, bdata,key):
         
     iv, ciphertext = AES_encrypt(key,bdata)
     bytearray_data: bytes = str(len(ciphertext)).zfill(8).encode() + b'~' + ciphertext
-    to_send :bytes = iv + b'|' + bytearray_data
+    to_send :bytes = iv + b'|' + bytearray_data #type:ignore
     sock.send(to_send)
     logtcp('sent', to_send)
 
 
-def recive_by_size(sock:socket, key:bytes) -> str:
+def recive_by_size(sock:socket.socket, key:bytes) -> str:
     """recive msg with sockets, using the first 8 bytes as the size of the msg and decrypting it with AES
     the message is in the format of 'iv|size~encrypted_msg'
 
@@ -156,7 +156,7 @@ def generate_keys():
     return private_key, public_key
 
 #RSA
-def AES_key_exchange(sock:socket) -> bytes:
+def AES_key_exchange(sock:socket.socket) -> bytes:
     """
     swaps with clinet keys for AES using RSA
     first the server sends public key, than clinet sends AES key encrypted using the public key, than server decrypts the AES key. Handshake done
@@ -213,7 +213,7 @@ def handle_request(data):
 
 
 
-def parse_type_request(sock: socket) -> bool:
+def parse_type_request(sock: socket.socket) -> bool:
     """
     before starting connection, clinet sends how to transfer the keys. this function hundles this request. only supported method is rsa
     this function will end only when clinet chooses rsa or disconnect
@@ -282,7 +282,7 @@ def handle_client(sock, tid, addr):
             else:
                 to_send, finish = handle_request(byte_data)
             if to_send != '':
-                send_data(sock, tid, to_send.encode(),key)
+                send_data(sock, tid, to_send.encode(),key) #type:ignore
             if finish:
                 time.sleep(1)
                 break
