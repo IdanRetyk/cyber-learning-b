@@ -9,5 +9,6 @@ most notable projects:
  - networks/tcp: Scripts related to tcp. 3way handshake implemention.
  - python/maze: solving a maze using DFS
  - python/bit_bytes.py: many struct related actions
- - python/ascii.py: 
+ - python/ascii.py: Connects to computer's camera and display it in ascii text. 
+ - python/shell.py: functioning shell, supports internal and external commands, include i/o redirect and piping using subprocesses.
  - poker: fully functioning multiplayer poker, using sockets. For more information see poker/README.md
