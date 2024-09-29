@@ -5,25 +5,6 @@ from termcolor import colored
 
 
 
-class ErrorMessage():
-    
-    __msg: str = ""
-    
-    def __init__(self, name, code, *args) -> None:
-        if name == "dir":
-            if code == 0:
-                self.__msg = "Syntax Error \n" + self.man("dir")
-            elif code == 1:
-                self.__msg = f"Directory of {args[0]}\n File  Not Found"
-
-    
-    def get_msg(self) -> str:
-        return self.__msg
-    
-    def man(self, name):
-        if name == "dir":
-            return "Usage - dir <flag> <path> \n flag explantion --"
-        
 
 
 class CMD():
@@ -81,12 +62,32 @@ class CMD():
                 break
             
         # At this point only the dir value is in the list. 
-        _dir = fields[0]
+        if len(fields) == 0: # No dir given
+            _dir = '.'
+        else:
+            _dir = fields[0]
         
         if not os.path.isdir(_dir):
             return ErrorMessage("dir", 1, _dir).get_msg()
+        
+        if flag == "": # No flags:
+            return "\n".join(os.listdir(_dir))
+        if flag == "/s": # Recursive
+            return_msg = f"{_dir}:"
+            listdir = os.listdir(_dir)
+            for file in listdir:
+                return_msg += '\n'
+                if os.path.isdir(file):
+                    return_msg += '\n'
+                    return_msg += self.dir(["dir", file, "/s"])
+                else:
+                    return_msg += file
+                
+            return return_msg
+        else:
+            return ErrorMessage("dir",0).get_msg()
 
-        return "\n".join(os.listdir(_dir))
+        
         
     def exit(self):
         self.__cont = False
@@ -106,7 +107,28 @@ class CMD():
         return colored("Retyk@","green") + colored(str(self.__path),"red")
 
 
+
+class ErrorMessage():
     
+    __msg: str = ""
+    
+    def __init__(self, name, code, *args) -> None:
+        if name == "dir":
+            if code == 0:
+                self.__msg = "Syntax Error \n" + self.man("dir")
+            elif code == 1:
+                self.__msg = f"Directory of {args[0]}\n File  Not Found"
+
+    
+    def get_msg(self) -> str:
+        return self.__msg
+    
+    def man(self, name):
+        if name == "dir":
+            return "Usage - dir <flag> <path> \n flag explantion --\n/s - recursive\n/H - hide hidden files"
+        
+
+
 #}
 def main():
     cmd = CMD()

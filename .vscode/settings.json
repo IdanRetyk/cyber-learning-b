@@ -3,7 +3,7 @@
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
     "editor.defaultFormatter": "mikoz.black-py",
-    "dotnet.defaultSolution": "disable",
+    "dotnet.defaultSolution": "enalbed",
     "cSpell.words": [
         "blit",
         "Idan",
