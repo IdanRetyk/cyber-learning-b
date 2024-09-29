@@ -30,6 +30,7 @@ class CMD():
     
     def __init__(self):
         self.__path: str = os.getcwd()
+        self.__cont: bool = True
         
         self.bootloader()
         
@@ -66,7 +67,7 @@ class CMD():
     
     def dir(self, fields:list[str]):
         if len(fields) == 1:
-            return self.dir(["dir", self.__path])
+            return "\n".join(os.listdir("."))
         fields.remove("dir")
         # Parse variables.
         
@@ -87,9 +88,16 @@ class CMD():
 
         return "\n".join(os.listdir(_dir))
         
+    def exit(self):
+        self.__cont = False
+        return "Bye Bye Bye"
+    
+    def cd(self,directory):
+        pass
+    
     
     def main_loop(self):
-        while True:
+        while self.__cont:
             user_input = input(f"{self.get_path_str()}>>>")
             print(self.digest_input(user_input))
     
