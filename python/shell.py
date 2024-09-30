@@ -173,6 +173,11 @@ class CMD():
                 return ErrorMessage("cat",0).get_msg()
         except UnicodeDecodeError as err:
             return "format not supported"
+    
+    def md(self,args: list[str]) -> str:
+        pass
+    
+    
     def main_loop(self):
         while self.__cont:
             user_input = input(f"{self.get_path_str()}>>>")
@@ -226,12 +231,8 @@ class ErrorMessage():
     
 
 
-
 def main():
     cmd = CMD()
 
-
-
 if __name__ == "__main__":
     main()
-
