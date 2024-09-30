@@ -1,4 +1,3 @@
-
 import os,re
 from termcolor import colored
 
@@ -10,7 +9,7 @@ from termcolor import colored
 class CMD():
     
     def __init__(self):
-        self.__path: str = os.getcwd()
+        self.__path: str = os.getcwd().replace('\\','/')
         self.__cont: bool = True
         
         self.bootloader()
@@ -44,8 +43,12 @@ class CMD():
             output = self.set(fields)
         elif command == "cat":
             output = self.cat(fields)
+        elif command == "md":
+            output = self.md(fields)
+        elif command == "rm":
+            output = self.rm(fields)
         else:
-            output = "unknown command"
+            output = "Unknown command, for a list of available command type 'help'"
         return output
     
     
@@ -175,7 +178,40 @@ class CMD():
             return "format not supported"
     
     def md(self,args: list[str]) -> str:
-        pass
+        if len (args) == 1 or len(args) > 3:
+            return ErrorMessage("md",0).get_msg()
+        if len (args) == 2: # Only name was given
+            if not '/' in args[1]:
+                flag,name = "",args[1]
+            else:
+                return "Syntax Error"
+        else: # Name and flag
+            if '/' in args[1]:
+                flag,name = args[1],args[2]
+            elif '/' in args[2]:
+                flag,name = args[2], args[1]
+            else:
+                return "Syntax Error"
+
+        if flag == "":
+            os.makedirs(self.__path +'/' + name)
+            return ""
+        elif flag == "/c":
+            os.makedirs(self.__path +'/' + name)
+            self.cd(["cd",name])
+            return ""
+        else:
+            return ErrorMessage("md",0).get_msg()
+    
+    def rm(self,args: list[str]) -> str:
+        if len (args) == 1 or len(args) > 2:
+            return ErrorMessage("rm",0).get_msg()
+        else:
+            name = args[1]
+            os.removedirs(self.__path + '/' + name)
+            return f"deleted directory {name} "
+            
+    
     
     
     def main_loop(self):
@@ -191,13 +227,18 @@ class CMD():
 def man(name):
         if name == "dir":
             return "Display content of directory\nUsage - dir <flag> <path> \nDefault Values:\npath = current path \n\nflag explanation --\n/s - recursive"
-        if name == "cd":
+        elif name == "cd":
             return "Change current directory\nUsage - cd <path>\n\nNo flags supported"
-        if name == "help":
+        elif name == "help":
             return "Get help\nUsage - help <command>\nDefault Values:\ncommand = help\n\nNo flags supported"
-        if name == "cat":
+        elif name == "cat":
             return "Display content of file\nUsage - cat <flag> <path> \n\nflag explanation --\n/n - number output lines"
-        return ""
+        elif name == "md":
+            return "Make a new directory\nUsage - md <flag> <name> \n\nflag explanation -- \n/c - move to directory"
+        elif name == "rm":
+            return "Deletes a directory\nUsage - rm <name> \n\nNo flags supported"
+        else:
+            return "Syntax Error.\nFor additional info type 'help'"
 
 class ErrorMessage():
     __msg: str = ""
@@ -223,6 +264,11 @@ class ErrorMessage():
                 self.__msg = "Syntax Error \n" + man(name)
             elif code == 1:
                 self.__msg = f"File {args[0]} Not Found"
+        
+        elif name == "md":
+            if code ==0:
+                self.__msg = "Syntax Error \n" + man(name)
+            
 
     
     def get_msg(self) -> str:
