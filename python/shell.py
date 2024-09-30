@@ -1,4 +1,4 @@
-import os,re
+import os,re,subprocess
 from termcolor import colored
 
 
@@ -11,7 +11,7 @@ class CMD():
     def __init__(self):
         self.__path: str = os.getcwd().replace('\\','/')
         self.__cont: bool = True
-        
+        self.__my_path: str = "/Users/Idan/cyber-learning-b/python;/Downloads/General;"
         self.bootloader()
         
         self.main_loop()
@@ -48,7 +48,8 @@ class CMD():
         elif command == "rm":
             output = self.rm(fields)
         else:
-            output = "Unknown command, for a list of available command type 'help'"
+            # External command
+            output = self.run_external(fields)
         return output
     
     
@@ -176,6 +177,8 @@ class CMD():
                 return ErrorMessage("cat",0).get_msg()
         except UnicodeDecodeError as err:
             return "format not supported"
+        except FileNotFoundError:
+            return ErrorMessage("cat",1,fpath).get_msg()
     
     def md(self,args: list[str]) -> str:
         if len (args) == 1 or len(args) > 3:
@@ -208,10 +211,34 @@ class CMD():
             return ErrorMessage("rm",0).get_msg()
         else:
             name = args[1]
-            os.removedirs(self.__path + '/' + name)
-            return f"deleted directory {name} "
+            if os.path.isdir(self.__path + '/' + name):
+                os.removedirs(self.__path + '/' + name)
+                return f"deleted directory {name} "
+            else:
+                return ErrorMessage("rm",1,name).get_msg()
             
-    
+    def run_external(self,cmd_input: list[str]) -> str:
+        
+        if len(cmd_input) == 0:
+            return ErrorMessage("external",0).get_msg()
+        
+        found_file: bool = False
+        for path in (self.__my_path.split(";") + [self.__path]):
+            
+            command_name = cmd_input[0]
+            if os.path.isfile(path + '/' + command_name) and not found_file:
+                found_file = True
+                if ".py" in command_name: 
+                    return subprocess.run(["python"] + cmd_input,cwd=path,capture_output=True,text=True).stdout or \
+                        subprocess.run(["python"] + cmd_input,cwd=path,capture_output=True,text=True).stderr
+                elif ".exe" in command_name:
+                    subprocess.run(cmd_input,cwd=path)
+                else:
+                    return "Unknown command"
+
+        if not found_file:
+            return ErrorMessage("external",1,command_name).get_msg() #type:ignore
+        return ""
     
     
     def main_loop(self):
@@ -221,7 +248,7 @@ class CMD():
     
     
     def get_path_str(self):
-        return colored("Retyk@","green") + colored(str(self.__path),"red")
+        return colored("Retyk","green") + colored("@","black") + colored(str(self.__path),"red")
 
 
 def man(name):
@@ -247,7 +274,7 @@ class ErrorMessage():
             if code == 0:
                 self.__msg = "Syntax Error \n" + man("dir")
             elif code == 1:
-                self.__msg = f"Directory of {args[0]}\n File  Not Found"
+                self.__msg = f" Directory of {args[0]}\n   File  Not Found"
         
         elif name == "cd":
             if code == 0:
@@ -263,13 +290,23 @@ class ErrorMessage():
             if code == 0:
                 self.__msg = "Syntax Error \n" + man(name)
             elif code == 1:
-                self.__msg = f"File {args[0]} Not Found"
+                self.__msg = f"File {args[0]} Not Found\n"
         
         elif name == "md":
             if code ==0:
                 self.__msg = "Syntax Error \n" + man(name)
+        
+        elif name == "rm":
+            if code == 0:
+                self.__msg = "Syntax Error \n" + man(name)
+            elif code == 1:
+                self.__msg = f"No such directory: {args[0]}\n"
             
-
+        elif name == "external":
+            if code == 0:
+                self.__msg = "Syntax Error\n"
+            elif code == 1:
+                self.__msg = f"Rerr: File not found: {args[0]}\n"
     
     def get_msg(self) -> str:
         return self.__msg
