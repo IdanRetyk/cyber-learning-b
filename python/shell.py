@@ -1,7 +1,5 @@
-import os,re,subprocess
+import os,re,subprocess,sys
 from termcolor import colored
-
-
 
 
 
@@ -9,7 +7,13 @@ from termcolor import colored
 class CMD():
     
     def __init__(self):
-        self.__path: str = os.getcwd().replace('\\','/')
+        self.__default_in = sys.stdin
+        self.__default_out = sys.stdout
+        self.__out = sys.stdout
+        self.__in = sys.stdin
+        self.__input : str = ""
+        self.__output: str = ""
+        self.__path: str = os.getcwd().replace('\\','/') # Any os will use forward slash (windows supports )
         self.__cont: bool = True
         self.__my_path: str = "/Users/Idan/cyber-learning-b/python;/Downloads/General;"
         self.bootloader()
@@ -18,7 +22,6 @@ class CMD():
         
 
     def bootloader(self):
-        __path = os.getcwd()
         print("Retyk's shell [Version 1.0]\n(c) Herzog Corporation. All rights reserved.")
         print()
     
@@ -27,6 +30,12 @@ class CMD():
         
         if len(input) == 0:
             return ""
+        
+        if '>' in input:
+            input,fileout = input.split('>')
+            self.__out = open(fileout,'w')
+            
+        
         fields : list[str] = input.split()
         command = fields[0]
         output: str = ""
@@ -229,12 +238,10 @@ class CMD():
             if os.path.isfile(path + '/' + command_name) and not found_file:
                 found_file = True
                 if ".py" in command_name: 
-                    return subprocess.run(["python"] + cmd_input,cwd=path,capture_output=True,text=True).stdout or \
-                        subprocess.run(["python"] + cmd_input,cwd=path,capture_output=True,text=True).stderr
+                    return subprocess.run(["python"] + cmd_input,cwd=path,text=True).stdout 
                 elif ".exe" in command_name:
-                    subprocess.run(cmd_input,cwd=path)
-                else:
-                    return "Unknown command"
+                    return subprocess.run(cmd_input,cwd=path,text=True).stdout 
+                return "Unknown command"
 
         if not found_file:
             return ErrorMessage("external",1,command_name).get_msg() #type:ignore
