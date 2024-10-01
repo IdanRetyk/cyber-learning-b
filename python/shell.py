@@ -77,16 +77,20 @@ class CMD():
             return output
     
     
-    def dir(self, fields:list[str]):
+    def dir(self, fields:list[str]) -> str:
         if len(fields) == 1:
             return "\n".join(os.listdir(self.__path))
         fields.remove("dir")
         # Parse variables.
         
+        if len(fields) > 4:
+            return ErrorMessage("dir",0).get_msg()
+        
+        
         # Field now contains only flag and path (if provided)
         flag, _dir = "",""
         for i in range(len(fields)):
-            if "/" in fields[i]:
+            if "-" in fields[i] and not '/' in fields[i]:
                 # Found flag.
                 flag = fields[i]
                 fields.remove(flag)
@@ -94,7 +98,7 @@ class CMD():
             
         # At this point only the directory value is in the list. 
         if len(fields) == 0: # No dir given
-            _dir = '.'
+            _dir = self.__path.split('/')[-1]
         else:
             _dir = fields[0]
         
@@ -103,14 +107,14 @@ class CMD():
         
         if flag == "": # No flags:
             return "\n".join(os.listdir(_dir))
-        if flag == "/s": # Recursive
+        if flag == "-s": # Recursive
             return_msg = f"{_dir}:"
             listdir = os.listdir(_dir)
             for file in listdir:
                 return_msg += '\n'
-                if os.path.isdir(file):
+                if os.path.isdir(_dir + '/' + file):
+                    return_msg += self.dir(["dir", _dir + '/' + file, "-s"])
                     return_msg += '\n'
-                    return_msg += self.dir(["dir", file, "/s"])
                 else:
                     return_msg += file
                 
@@ -178,7 +182,7 @@ class CMD():
         # Field now contains only flag and path (if provided)
         flag, fpath = "",""
         for i in range(len(args)):
-            if "/" in args[i]:
+            if "-" in args[i]:
                 # Found flag.
                 flag = args[i]
                 args.remove(flag)
@@ -192,7 +196,7 @@ class CMD():
             if not flag: # No flags provided
                 with open(fpath,'r') as file:
                     return file.read()
-            elif flag == "/n": # n flag - numbers the lines.
+            elif flag == "-n": # n flag - numbers the lines.
                 with open(fpath,'r') as file:
                     lines = file.read().splitlines()
                     numbered_lines = [f"{i + 1}: {line}" for i, line in enumerate(lines)]
@@ -213,9 +217,9 @@ class CMD():
             else:
                 return "Syntax Error"
         else: # Name and flag
-            if '/' in args[1]:
+            if '-' in args[1]:
                 flag,name = args[1],args[2]
-            elif '/' in args[2]:
+            elif '-' in args[2]:
                 flag,name = args[2], args[1]
             else:
                 return "Syntax Error"
@@ -223,7 +227,7 @@ class CMD():
         if flag == "":
             os.makedirs(self.__path +'/' + name)
             return ""
-        elif flag == "/c":
+        elif flag == "-c":
             os.makedirs(self.__path +'/' + name)
             self.cd(["cd",name])
             return ""
@@ -290,15 +294,15 @@ class CMD():
 
 def man(name):
         if name == "dir":
-            return "Display content of directory\nUsage - dir <flag> <path> \nDefault Values:\npath = current path \n\nflag explanation --\n/s - recursive"
+            return "Display content of directory\nUsage - dir <flag> <path> \nDefault Values:\npath = current path \n\nflag explanation --\n-s - recursive"
         elif name == "cd":
             return "Change current directory\nUsage - cd <path>\n\nNo flags supported"
         elif name == "help":
             return "Get help\nUsage - help <command>\nDefault Values:\ncommand = help\n\nNo flags supported"
         elif name == "cat":
-            return "Display content of file\nUsage - cat <flag> <path> \n\nflag explanation --\n/n - number output lines"
+            return "Display content of file\nUsage - cat <flag> <path> \n\nflag explanation --\n-n - number output lines"
         elif name == "md":
-            return "Make a new directory\nUsage - md <flag> <name> \n\nflag explanation -- \n/c - move to directory"
+            return "Make a new directory\nUsage - md <flag> <name> \n\nflag explanation -- \n-c - move to directory"
         elif name == "rm":
             return "Deletes a directory\nUsage - rm <name> \n\nNo flags supported"
         else:
