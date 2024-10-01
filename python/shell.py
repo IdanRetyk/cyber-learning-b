@@ -7,10 +7,8 @@ from termcolor import colored
 class CMD():
     
     def __init__(self):
-        self.__default_in = sys.stdin
-        self.__default_out = sys.stdout
-        self.__out = sys.stdout
-        self.__in = sys.stdin
+        self.__outpath: str = ""
+        self.__inpath: str = ""
         self.__input : str = ""
         self.__output: str = ""
         self.__path: str = os.getcwd().replace('\\','/') # Any os will use forward slash (windows supports )
@@ -30,11 +28,13 @@ class CMD():
         
         if len(input) == 0:
             return ""
-        
+        outpath,inpath = "",""
         if '>' in input:
-            input,fileout = input.split('>')
-            self.__out = open(fileout,'w')
-            
+            input,outpath = input.split('> ')
+        if '<' in input:
+            input,inpath = input.split('< ')
+        if '<' in outpath:
+            outpath,inpath = outpath.split('< ')
         
         fields : list[str] = input.split()
         command = fields[0]
@@ -58,8 +58,19 @@ class CMD():
             output = self.rm(fields)
         else:
             # External command
+            self.__inpath,self.__outpath = inpath,outpath
             output = self.run_external(fields)
-        return output
+            if output:
+                return output
+            else:
+                return ""
+        
+        if outpath: # if output is redirected
+            with open(self.__path + '/' + outpath,'w') as file:
+                file.write(output)
+            return ""
+        else:
+            return output
     
     
     def dir(self, fields:list[str]):
@@ -231,18 +242,33 @@ class CMD():
         if len(cmd_input) == 0:
             return ErrorMessage("external",0).get_msg()
         
-        found_file: bool = False
-        for path in (self.__my_path.split(";") + [self.__path]):
-            
-            command_name = cmd_input[0]
-            if os.path.isfile(path + '/' + command_name) and not found_file:
-                found_file = True
-                if ".py" in command_name: 
-                    return subprocess.run(["python"] + cmd_input,cwd=path,text=True).stdout 
-                elif ".exe" in command_name:
-                    return subprocess.run(cmd_input,cwd=path,text=True).stdout 
-                return "Unknown command"
-
+        if self.__outpath:
+            fout = open(self.__path + '/' + self.__outpath,'w')
+        else:
+            fout = None
+        
+        if self.__inpath:
+            fin = open(self.__path + '/' + self.__inpath,'r')
+        else:
+            fin = None
+        
+        try:
+            found_file: bool = False
+            for path in (self.__my_path.split(";") + [self.__path]):
+                
+                command_name = cmd_input[0]
+                if os.path.isfile(path + '/' + command_name) and not found_file:
+                    found_file = True
+                    if ".py" in command_name: 
+                        return subprocess.run(["python"] + cmd_input,cwd=path,text=True,stdin=fin,stdout=fout).stdout 
+                    elif ".exe" in command_name:
+                        return subprocess.run(cmd_input,cwd=path,text=True,stdin=fin,stdout=fout).stdout 
+                    return "Unknown command"
+        finally:
+            if fout:
+                fout.close()
+            if fin:
+                fin.close()
         if not found_file:
             return ErrorMessage("external",1,command_name).get_msg() #type:ignore
         return ""
