@@ -36,6 +36,10 @@ class CMD():
         if '<' in outpath:
             outpath,inpath = outpath.split('< ')
         
+        
+        
+        
+
         fields : list[str] = input.split()
         command = fields[0]
         output: str = ""
