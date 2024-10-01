@@ -87,6 +87,7 @@ class CMD():
             return ErrorMessage("dir",0).get_msg()
         
         
+        
         # Field now contains only flag and path (if provided)
         flag, _dir = "",""
         for i in range(len(fields)):
@@ -101,9 +102,8 @@ class CMD():
             _dir = self.__path.split('/')[-1]
         else:
             _dir = fields[0]
-        
-        if not os.path.isdir(_dir):
-            return ErrorMessage("dir", 1, _dir).get_msg()
+            if not os.path.isdir(_dir):
+                return ErrorMessage("dir", 1, _dir).get_msg()
         
         if flag == "": # No flags:
             return "\n".join(os.listdir(_dir))
