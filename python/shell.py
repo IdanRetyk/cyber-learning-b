@@ -78,7 +78,7 @@ class CMD():
     
     
     def dir(self, fields:list[str]) -> str:
-        if len(fields) == 1:
+        if len(fields) == 1: # User type ""dir""
             return "\n".join(os.listdir(self.__path))
         fields.remove("dir")
         # Parse variables.
@@ -89,34 +89,42 @@ class CMD():
         
         
         # Field now contains only flag and path (if provided)
-        flag, _dir = "",""
+        flag, _dir,file_type = "","",""
         for i in range(len(fields)):
             if "-" in fields[i] and not '/' in fields[i]:
                 # Found flag.
                 flag = fields[i]
-                fields.remove(flag)
-                break
             
+            if re.match(r"\*\.",fields[i]):
+                file_type = "." + fields[i].split('.')[-1]
+        
+        if flag:
+            fields.remove(flag)
+        if file_type:
+            fields.remove(f"*{file_type}")
         # At this point only the directory value is in the list. 
         if len(fields) == 0: # No dir given
-            _dir = self.__path.split('/')[-1]
+            _dir = self.__path
         else:
             _dir = fields[0]
             if not os.path.isdir(_dir):
                 return ErrorMessage("dir", 1, _dir).get_msg()
         
         if flag == "": # No flags:
-            return "\n".join(os.listdir(_dir))
+            return "\n".join([i for i in os.listdir(_dir) if file_type in i])
         if flag == "-s": # Recursive
-            return_msg = f"{_dir}:"
+            return_msg = f"{_dir.split('/')[-1]}:"
             listdir = os.listdir(_dir)
             for file in listdir:
-                return_msg += '\n'
+                
                 if os.path.isdir(_dir + '/' + file):
-                    return_msg += self.dir(["dir", _dir + '/' + file, "-s"])
+                    return_msg += '\n'
+                    return_msg += self.dir(["dir", _dir + '/' + file, "-s",f"*{file_type}"])
                     return_msg += '\n'
                 else:
-                    return_msg += file
+                    if file_type in file:
+                        return_msg += '\n'
+                        return_msg += file
                 
             return return_msg
         else:
