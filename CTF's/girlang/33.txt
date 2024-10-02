@@ -1,0 +1,14 @@
+CODE:
+=======
+bebe 103 !a
+chu !a
+pabiku !b
+chu !b
+pabiku !x
+pika
+=======
+
+
+OUTPUT:
+=======
+g

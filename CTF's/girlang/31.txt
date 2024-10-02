@@ -1,0 +1,12 @@
+CODE:
+=======
+bebe 108 !a
+chu !a
+pabiku !x
+pika
+=======
+
+
+OUTPUT:
+=======
+l

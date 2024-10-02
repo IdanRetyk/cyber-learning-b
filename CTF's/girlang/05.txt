@@ -1,0 +1,15 @@
+CODE:
+=======
+chu 5
+pabiku !x
+chu 7
+pabiku !x
+chu 6
+pabiku !x
+pika
+=======
+
+
+OUTPUT:
+=======
+6

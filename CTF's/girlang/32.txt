@@ -1,0 +1,12 @@
+CODE:
+=======
+bubu f !a
+baba !a 2 !x
+bebe !x !x
+pika
+=======
+
+
+OUTPUT:
+=======
+d

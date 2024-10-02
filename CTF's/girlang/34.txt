@@ -1,0 +1,23 @@
+CODE:
+=======
+bebe 110 !a
+chu !a
+pabiku !b
+bubu !b !b
+club !b 42 !b
+baba !b 39 !y
+bebe !y !x
+bubu !x !x
+chu !x
+pabiku !b
+club !b 4 !a
+bebe !a !x
+chu !x
+pabiku !b
+pika
+=======
+
+
+OUTPUT:
+=======
+u

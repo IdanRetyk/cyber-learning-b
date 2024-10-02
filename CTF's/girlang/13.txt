@@ -1,0 +1,43 @@
+CODE:
+=======
+chu 12
+chu 1337
+chu 7129
+pabiku !a
+chu 50
+chu !a
+pabiku !x
+chu !x
+pabiku !b
+pabiku !x
+chu 4891
+pabiku !b
+chu 912
+pabiku !b
+chu !b
+pabiku !x
+chu !a
+chu !a
+chu 141
+pabiku !a
+pabiku !b
+pabiku !x
+chu !x
+pabiku !a
+pabiku !b
+chu !x
+chu 1739
+chu !x
+pabiku !b
+chu !a
+pabiku !b
+chu !a
+pabiku !x
+chu !a
+pika
+=======
+
+
+OUTPUT:
+=======
+7129

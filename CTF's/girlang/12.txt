@@ -1,0 +1,13 @@
+CODE:
+=======
+chu 12
+pabiku !x
+pika
+pika
+=======
+
+
+OUTPUT:
+=======
+12
+12

@@ -1,0 +1,17 @@
+CODE:
+=======
+chu 5
+pabiku !a
+club 2 !a !x
+pika
+chu 7
+pabiku !x
+club 3 !x !x
+pika
+=======
+
+
+OUTPUT:
+=======
+7
+10
