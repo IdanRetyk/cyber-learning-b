@@ -1,0 +1,11 @@
+CODE:
+=======
+chu hello
+pabiku !x
+pika
+=======
+
+
+OUTPUT:
+=======
+hello

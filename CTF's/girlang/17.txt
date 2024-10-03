@@ -1,0 +1,19 @@
+CODE:
+=======
+club 1 1 !x
+pika
+club 1 2 !x
+pika
+club 4 2 !x
+pika
+club 5 2 !y
+pika
+=======
+
+
+OUTPUT:
+=======
+2
+3
+6
+6

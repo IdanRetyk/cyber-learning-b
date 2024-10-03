@@ -1,0 +1,12 @@
+CODE:
+=======
+bubu k !a
+chu !a
+pabiku !x
+pika
+=======
+
+
+OUTPUT:
+=======
+107

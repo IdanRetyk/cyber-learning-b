@@ -1,0 +1,11 @@
+CODE:
+=======
+bubu k !a
+club !a 4 !x
+pika
+=======
+
+
+OUTPUT:
+=======
+111

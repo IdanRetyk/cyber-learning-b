@@ -1,0 +1,18 @@
+CODE:
+=======
+chu 20
+pabiku !a
+baba !a !a !a
+chu 40
+pabiku !b
+baba 42 !b !x
+chu !x
+pabiku !y
+baba !a !y !x
+pika
+=======
+
+
+OUTPUT:
+=======
+-2
