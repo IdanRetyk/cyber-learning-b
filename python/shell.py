@@ -35,10 +35,7 @@ class CMD():
             input,inpath = input.split('< ')
         if '<' in outpath:
             outpath,inpath = outpath.split('< ')
-        
-        
-        
-        
+
 
         fields : list[str] = input.split()
         command = fields[0]
@@ -134,7 +131,7 @@ class CMD():
         self.__cont = False
         return "Bye Bye Bye"
     
-    def cd(self,args: list[str]) -> str:
+    def cd(self, args: list[str]) -> str:
         
         if len(args) == 1:
             return ""
@@ -169,12 +166,41 @@ class CMD():
 
         return ""
     
-    def set(self, args) -> str:
+    def set(self, args: list[str]) -> str:
+        if len(args) == 1:
+            return "\n".join(f"{k} = {v}" for k,v in os.environ.items())
+        
+        env_var = args[2].split('=')
+        var_name = env_var[0]
+        
+        if len(env_var) == 1:
+            try:
+                content = os.environ[var_name]
+                
+                for key in os.environ:
+                    if key.lower() == var_name.lower():
+                        var_name = key
+                        break
+                
+                return f"{var_name} = {content}"
+            except KeyError:
+                return ErrorMessage("set",1,var_name).get_msg()
+        
+        else:
+            env_var_val = "=".join(env_var[1:])
+            if env_var_val == "":
+                try:
+                    del os.environ[var_name]
+                except KeyError:
+                    pass
+                else:
+                    os.environ[var_name] = env_var_val
+        
         return ""
     
     def help(self, args: list[str]) -> str:
         if len(args) == 1:
-            return "These shell commands are defined internally.\nFor additional info about each command type help <command>\nset,cd,dir,exit"
+            return "These shell commands are defined internally.\nFor additional info about each command type help <command>\nset,cd,dir,exit,rm,cat,md"
         elif len(args) == 2:
             return man(args[1])
         else:
@@ -279,7 +305,7 @@ class CMD():
                         return subprocess.run(["python"] + cmd_input,cwd=path,text=True,stdin=fin,stdout=fout).stdout 
                     elif ".exe" in command_name:
                         return subprocess.run(cmd_input,cwd=path,text=True,stdin=fin,stdout=fout).stdout 
-                    return "Unknown command"
+                    return "Unknown command. For additional info type 'help'"
         finally:
             if fout:
                 fout.close()
@@ -313,6 +339,8 @@ def man(name):
             return "Make a new directory\nUsage - md <flag> <name> \n\nflag explanation -- \n-c - move to directory"
         elif name == "rm":
             return "Deletes a directory\nUsage - rm <name> \n\nNo flags supported"
+        elif name == "exit":
+            return "Exits."
         else:
             return "Syntax Error.\nFor additional info type 'help'"
 
@@ -350,6 +378,10 @@ class ErrorMessage():
                 self.__msg = "Syntax Error \n" + man(name)
             elif code == 1:
                 self.__msg = f"No such directory: {args[0]}\n"
+        
+        elif name == "set":
+            if code == 1:
+                self.__msg = f"{args} variable not defined."
             
         elif name == "external":
             if code == 0:
