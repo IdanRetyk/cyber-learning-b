@@ -5,7 +5,7 @@ from termcolor import colored
 
 
 class CMD():
-    
+    # Singleton
     def __init__(self):
         self.__outpath: str = ""
         self.__inpath: str = ""
@@ -13,7 +13,7 @@ class CMD():
         self.__output: str = ""
         self.__path: str = os.getcwd().replace('\\','/') # Any os will use forward slash (windows supports )
         self.__cont: bool = True
-        self.__my_path: str = "/Users/Idan/cyber-learning-b/python;/Downloads/General;"
+        self.__my_path: str = os.environ["PATH"] + "/Users/Idan/cyber-learning-b/python;"
         self.bootloader()
         
         self.main_loop()
@@ -29,6 +29,8 @@ class CMD():
         if len(input) == 0:
             return ""
         outpath,inpath = "",""
+        if '|' in input:
+            first,second = input.split('|')
         if '>' in input:
             input,outpath = input.split('> ')
         if '<' in input:
@@ -41,22 +43,8 @@ class CMD():
         command = fields[0]
         output: str = ""
         # Internal command (hard coded)
-        if command == "dir":
-            output = self.dir(fields)
-        elif command == "exit":
-            output = self.exit()
-        elif command == "help":
-            output = self.help(fields)
-        elif command == "cd":
-            output = self.cd(fields)
-        elif command == "set":
-            output = self.set(fields)
-        elif command == "cat":
-            output = self.cat(fields)
-        elif command == "md":
-            output = self.md(fields)
-        elif command == "rm":
-            output = self.rm(fields)
+        if command in ["dir","exit","help","cd","set","cat","md","rm"]:
+            output = eval(f'self.{command}(fields)') 
         else:
             # External command
             self.__inpath,self.__outpath = inpath,outpath
@@ -72,7 +60,6 @@ class CMD():
             return ""
         else:
             return output
-    
     
     def dir(self, fields:list[str]) -> str:
         if len(fields) == 1: # User type ""dir""
@@ -127,7 +114,7 @@ class CMD():
         else:
             return ErrorMessage("dir",0).get_msg()
         
-    def exit(self):
+    def exit(self, fields: list[str]):
         self.__cont = False
         return "Bye Bye Bye"
     
@@ -149,13 +136,11 @@ class CMD():
         
         for directory in path.split("/"):
             
-            if directory == '.':
-                pass # Path is the same
+            if directory == '.': # Path is the same
+                print(self.__path) 
             elif directory == "..": # Backtrack one directory
-                if re.search("/.*/",self.__path): 
+                if re.search("/.*/",self.__path): # If there is only one directory left, don't backtrack.
                     self.__path = "/".join(self.__path.split("/")[:-1])
-                else:
-                    pass
             else:
                 if os.path.isdir(self.__path + "/" + directory):
                     self.__path += '/'
@@ -280,7 +265,6 @@ class CMD():
                 return ErrorMessage("rm",1,name).get_msg()
             
     def run_external(self,cmd_input: list[str]) -> str:
-        
         if len(cmd_input) == 0:
             return ErrorMessage("external",0).get_msg()
         
