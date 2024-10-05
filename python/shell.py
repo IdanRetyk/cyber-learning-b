@@ -1,7 +1,5 @@
-import os,re,subprocess,sys
+import os,re,subprocess,random
 from termcolor import colored
-
-
 
 
 class CMD():
@@ -13,7 +11,11 @@ class CMD():
         self.__output: str = ""
         self.__path: str = os.getcwd().replace('\\','/') # Any os will use forward slash (windows supports )
         self.__cont: bool = True
-        self.__my_path: str = os.environ["PATH"] + "/Users/Idan/cyber-learning-b/python;"
+        self.__my_path: str = os.environ["PATH"] + "/Users/Idan/cyber-learning-b/python;/Users/Idan/downloads;"
+        
+        self.interals: list[str] = ["dir","exit","help","cd","set","cat","md","rm"]
+        
+        
         self.bootloader()
         
         self.main_loop()
@@ -30,7 +32,9 @@ class CMD():
             return ""
         outpath,inpath = "",""
         if '|' in input:
-            first,second = input.split('|')
+            first,second = input.split('| ')
+            self.handle_pipe(first,second)
+            return ""
         if '>' in input:
             input,outpath = input.split('> ')
         if '<' in input:
@@ -38,12 +42,11 @@ class CMD():
         if '<' in outpath:
             outpath,inpath = outpath.split('< ')
 
-
         fields : list[str] = input.split()
         command = fields[0]
         output: str = ""
         # Internal command (hard coded)
-        if command in ["dir","exit","help","cd","set","cat","md","rm"]:
+        if command in self.interals:
             output = eval(f'self.{command}(fields)') 
         else:
             # External command
@@ -61,8 +64,65 @@ class CMD():
         else:
             return output
     
+    def handle_pipe(self,first :str,second: str):
+        if first.split()[0] in self.interals: # If first command is internal simply call digest input twice.
+            file_name = str(random.randint(1000,9999)) + 'txt'
+            while os.path.isfile(self.__path + '/' + file_name):
+                file_name = str(random.randint(1000,9999)) + '.txt'
+            self.digest_input(f"{first} > {file_name}")
+            to_return =  self.digest_input(f"{second} < {file_name}")
+            os.remove(self.__path + '/' + file_name)
+            return to_return
+        
+        if second.split()[0] in self.interals: # If second command is internal, perform the first command without any output, and than the second one as usual
+                                                #as none of the internal commands support input redirect.
+            self.digest_input(f"{first}")
+            return self.digest_input(f"{second}")
+        
+        # If both are external.
+        
+        # open p1
+        found_file: bool = False
+        for path in (self.__my_path.split(";") + [self.__path]):
+            cmd_input = first.split()
+            command_name = cmd_input[0]
+            if os.path.isfile(path + '/' + command_name) and not found_file:
+                found_file = True
+                if ".py" in command_name: 
+                    p1: subprocess.Popen[str] = subprocess.Popen(["python"] + cmd_input,cwd=path,text=True,stdin=None,stdout=subprocess.PIPE) 
+                elif ".exe" in command_name:
+                    p1 = subprocess.Popen(cmd_input,cwd=path,text=True,stdin=None,stdout=subprocess.PIPE) 
+                else:
+                    print("Unkown command")
+        # open p2
+        found_file: bool = False
+        for path in (self.__my_path.split(";") + [self.__path]):
+            command_name = second.split()[0]
+            if os.path.isfile(path + '/' + command_name) and not found_file:
+                found_file = True
+                if ".py" in command_name: 
+                    p2 = subprocess.Popen("python " + second,cwd=path,text=True,stdin=p1.stdout)  # type: ignore
+                elif ".exe" in command_name:
+                    p2 = subprocess.Popen(second,cwd=path,text=True,stdin=p1.stdout) # type: ignore
+                else:
+                    print("Unkown command")
+        
+        p1.stdout.close() # type:ignore
+        print("Before communicate")
+        try:
+            outs, errs = p2.communicate() # type:ignore
+            print("After Communicate")
+            if outs:
+                print(outs)
+
+        except subprocess.TimeoutExpired:
+            p2.kill() # type:ignore
+            outs, errs = p2.communicate() # type:ignore
+        
+        
+    
     def dir(self, fields:list[str]) -> str:
-        if len(fields) == 1: # User type ""dir""
+        if len(fields) == 1: # User typed ""dir""
             return "\n".join(os.listdir(self.__path))
         fields.remove("dir")
         # Parse variables.
