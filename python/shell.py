@@ -89,7 +89,7 @@ class CMD():
             if os.path.isfile(path + '/' + command_name) and not found_file:
                 found_file = True
                 if ".py" in command_name: 
-                    p1: subprocess.Popen[str] = subprocess.Popen(["python"] + cmd_input,cwd=path,text=True,stdin=None,stdout=subprocess.PIPE) 
+                    p1 = subprocess.Popen(["python"] + cmd_input,cwd=path,text=True,stdin=None,stdout=subprocess.PIPE) 
                 elif ".exe" in command_name:
                     p1 = subprocess.Popen(cmd_input,cwd=path,text=True,stdin=None,stdout=subprocess.PIPE) 
                 else:
@@ -181,7 +181,7 @@ class CMD():
     def cd(self, args: list[str]) -> str:
         
         if len(args) == 1:
-            return ""
+            return self.__path +'\n'
         if len(args) == 2:
             path = args[1]
         else:
@@ -303,6 +303,10 @@ class CMD():
             else:
                 return "Syntax Error"
 
+        
+        if os.path.exists(self.__path +'/' + name):
+            return ErrorMessage("md",1,name).get_msg()
+        
         if flag == "":
             os.makedirs(self.__path +'/' + name)
             return ""
@@ -416,6 +420,8 @@ class ErrorMessage():
         elif name == "md":
             if code ==0:
                 self.__msg = "Syntax Error \n" + man(name)
+            elif code == 1:
+                self.__msg = f"Directory already exist: {args[0]}"
         
         elif name == "rm":
             if code == 0:
