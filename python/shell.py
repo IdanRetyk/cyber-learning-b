@@ -20,7 +20,7 @@ class CMD():
         
 
     def bootloader(self):
-        print("Retyk's shell [Version 1.0]\n(c) Herzog Corporation. All rights reserved.")
+        print("Retyk's shell [Version 1.1]\n(c) Herzog Corporation. All rights reserved.")
         print()
     
     
