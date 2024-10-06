@@ -1,4 +1,4 @@
-import os,re,subprocess,random
+import os,re,subprocess,random,platform
 from termcolor import colored
 
 
@@ -383,7 +383,7 @@ class CMD():
     
     
     def get_prompt(self):
-        return "┌──(" + colored("Retyk@" + os.environ["COMPUTERNAME"],"green") + ")" + colored("-","white") + "[" + colored(str(self.__path),"red") + "]\n└─" + colored('$ ',"red")
+        return "┌──(" + colored("Retyk@" + platform.node(),"green") + ")" + colored("-","white") + "[" + colored(str(self.__path),"red") + "]\n└─" + colored('$ ',"red")
 
 
 
