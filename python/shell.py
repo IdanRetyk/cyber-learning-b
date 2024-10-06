@@ -7,8 +7,6 @@ class CMD():
     def __init__(self):
         self.__outpath: str = ""
         self.__inpath: str = ""
-        self.__input : str = ""
-        self.__output: str = ""
         self.__path: str = os.getcwd().replace('\\','/') # Any os will use forward slash (windows supports )
         self.__cont: bool = True
         self.__my_path: str = os.environ["PATH"] + "/Users/Idan/cyber-learning-b/python;/Users/Idan/downloads;"
@@ -26,15 +24,14 @@ class CMD():
         print()
     
     
-    def digest_input(self,input: str) -> str:
+    def digest_input(self,input: str, pipe: int = 0) -> str :
         
         if len(input) == 0:
             return ""
         outpath,inpath = "",""
         if '|' in input:
             first,second = input.split('| ')
-            self.handle_pipe(first,second)
-            return ""
+            return (self.handle_pipe(first,second))
         if '>' in input:
             input,outpath = input.split('> ')
         if '<' in input:
@@ -51,11 +48,8 @@ class CMD():
         else:
             # External command
             self.__inpath,self.__outpath = inpath,outpath
-            output = self.run_external(fields)
-            if output:
-                return output
-            else:
-                return ""
+            return self.run_external(fields,pipe)
+            
         
         if outpath: # if output is redirected
             with open(self.__path + '/' + outpath,'w') as file:
@@ -64,49 +58,31 @@ class CMD():
         else:
             return output
     
-    def handle_pipe(self,first :str,second: str):
-        if first.split()[0] in self.interals: # If first command is internal simply call digest input twice.
-            file_name = str(random.randint(1000,9999)) + 'txt'
+    def handle_pipe(self,first :str,second: str) -> str:
+        # If first command is internal simply call digest input twice.
+        if first.split()[0] in self.interals: 
+            file_name = str(random.randint(1000,9999)) + '.txt'
             while os.path.isfile(self.__path + '/' + file_name):
                 file_name = str(random.randint(1000,9999)) + '.txt'
             self.digest_input(f"{first} > {file_name}")
-            to_return =  self.digest_input(f"{second} < {file_name}")
+            output = self.digest_input(f"{second} < {file_name}")
             os.remove(self.__path + '/' + file_name)
-            return to_return
+            return output
         
-        if second.split()[0] in self.interals: # If second command is internal, perform the first command without any output, and than the second one as usual
-                                                #as none of the internal commands support input redirect.
+        # If second command is internal, perform the first command without any output, and than the second one as usual
+                            #as none of the internal commands support input redirect.
+        if second.split()[0] in self.interals: 
             self.digest_input(f"{first}")
             return self.digest_input(f"{second}")
         
-        # If both are external.
         
-        # open p1
-        found_file: bool = False
-        for path in (self.__my_path.split(";") + [self.__path]):
-            cmd_input = first.split()
-            command_name = cmd_input[0]
-            if os.path.isfile(path + '/' + command_name) and not found_file:
-                found_file = True
-                if ".py" in command_name: 
-                    p1 = subprocess.Popen(["python"] + cmd_input,cwd=path,text=True,stdin=None,stdout=subprocess.PIPE) 
-                elif ".exe" in command_name:
-                    p1 = subprocess.Popen(cmd_input,cwd=path,text=True,stdin=None,stdout=subprocess.PIPE) 
-                else:
-                    print("Unkown command")
-        # open p2
-        found_file: bool = False
-        for path in (self.__my_path.split(";") + [self.__path]):
-            command_name = second.split()[0]
-            if os.path.isfile(path + '/' + command_name) and not found_file:
-                found_file = True
-                if ".py" in command_name: 
-                    p2 = subprocess.Popen("python " + second,cwd=path,text=True,stdin=p1.stdout)  # type: ignore
-                elif ".exe" in command_name:
-                    p2 = subprocess.Popen(second,cwd=path,text=True,stdin=p1.stdout) # type: ignore
-                else:
-                    print("Unkown command")
+        # If both are external actually handle pipe.
         
+        err_msg1 = self.digest_input(first,1)
+        err_msg2 = self.digest_input(second,2)
+        if err_msg1 or err_msg2:
+            return err_msg2 + err_msg1
+        p1,p2 = self.p1,self.p2
         p1.stdout.close() # type:ignore
         print("Before communicate")
         try:
@@ -114,10 +90,12 @@ class CMD():
             print("After Communicate")
             if outs:
                 print(outs)
+            return ""
 
         except subprocess.TimeoutExpired:
             p2.kill() # type:ignore
             outs, errs = p2.communicate() # type:ignore
+            return ""
         
         
     
@@ -129,8 +107,6 @@ class CMD():
         
         if len(fields) > 4:
             return ErrorMessage("dir",0).get_msg()
-        
-        
         
         # Field now contains only flag and path (if provided)
         flag, _dir,file_type = "","",""
@@ -329,45 +305,67 @@ class CMD():
             else:
                 return ErrorMessage("rm",1,name).get_msg()
             
-    def run_external(self,cmd_input: list[str]) -> str:
+    def run_external(self,cmd_input: list[str], pipe:int = 0) ->  str:
         if len(cmd_input) == 0:
             return ErrorMessage("external",0).get_msg()
         
-        if self.__outpath:
-            fout = open(self.__path + '/' + self.__outpath,'w')
+        if not pipe:
+            if self.__outpath:
+                fout = open(self.__path + '/' + self.__outpath,'w')
+            else:
+                fout = None
+            
+            if self.__inpath:
+                fin = open(self.__path + '/' + self.__inpath,'r')
+            else:
+                fin = None
         else:
-            fout = None
-        
-        if self.__inpath:
-            fin = open(self.__path + '/' + self.__inpath,'r')
-        else:
-            fin = None
+            if pipe == 1:
+                fout = subprocess.PIPE
+                if self.__inpath:
+                    fin = open(self.__path + '/' + self.__inpath,'r')
+                else:
+                    fin = None
+            else:
+                if self.__outpath:
+                    fout = open(self.__path + '/' + self.__outpath,'w')
+                else:
+                    fout = None
+                fin = self.p1.stdout # type:ignore
         
         try:
             found_file: bool = False
-            for path in (self.__my_path.split(";") + [self.__path]):
-                
-                command_name = cmd_input[0]
-                if ".py" in command_name: # If python file, look in hardcoded path for the file.
+            
+            proc = ""
+            command_name = cmd_input[0]
+            if ".py" in command_name: # If python file, look in hardcoded path for the file.
+                for path in (self.__my_path.split(";") + [self.__path]):
                     if os.path.isfile(path + '/' + command_name) and not found_file:
                         found_file = True 
-                        proc = subprocess.Popen(["python"] + cmd_input,cwd=path,text=True,stdin=fin,stdout=fout) 
-                    if not found_file:
-                        return f"File not found: {command_name}"
+                        proc = subprocess.Popen(["python"] + cmd_input,cwd=path,text=True,stdin=fin,stdout=fout)
+                        
+                if not found_file:
+                    return f"File not found: {command_name}"
+            else:
+                if command_name in self.cmd_comands: # If external for the shell but interal for actual cmd.
+                    proc = subprocess.Popen(["cmd.exe","/c"] + cmd_input,cwd=self.__path,text=True,stdin=fin,stdout=fout)
                 else:
-                    if command_name in self.cmd_comands: # If external for the shell but interal for actual cmd.
-                        proc = subprocess.Popen(["cmd.exe /c"] + cmd_input,cwd=path,text=True,stdin=fin,stdout=fout)
-                    proc =  subprocess.run(cmd_input,cwd=path,text=True,stdin=fin,stdout=fout).stdout 
-                    return "Unknown command. For additional info type 'help'"
-        finally:
-            if fout:
+                    proc =  subprocess.Popen(cmd_input,cwd=self.__path,text=True,stdin=fin,stdout=fout)
+                
+            
+            if pipe == 1:
+                self.p1 = proc
+            elif pipe == 2:
+                self.p2 = proc
+            else:
+                proc.wait() #type:ignore
+            return ""
+        finally: # If fout and fin are files make sure to close them no matter what happened to the script.
+            if fout and not isinstance(fout,int):
                 fout.close()
-            if fin:
+            if fin and not isinstance(fin,int):
                 fin.close()
-        if not found_file:
-            return ErrorMessage("external",1,command_name).get_msg() #type:ignore
-        return ""
-    
+
     
     def main_loop(self):
         while self.__cont:
