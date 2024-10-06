@@ -222,7 +222,12 @@ class CMD():
     
     def help(self, args: list[str]) -> str:
         if len(args) == 1:
-            return "These shell commands are defined internally.\nFor additional info about each command type help <command>\nset,cd,dir,exit,rm,cat,md"
+            return "Idan Retyk's shell implementation.\n\n"\
+                + "These shell commands are defined internally: [set,cd,dir,exit,rm,cat,md,help]\n"\
+                + "For additional info about each command type help <command>\n"\
+                + "Supports any system commands, that aren't implemented internally in this shell. e.g. echo, copy\n"\
+                + "can run python scripts if stated by name, and can run external .exe files that are in system PATH\n"\
+                + "to redirect use <, > and piping is |\n\nWorking with system command or external files is limited to windows systems only.\n"
         elif len(args) == 2:
             return man(args[1])
         else:
@@ -368,13 +373,17 @@ class CMD():
 
     
     def main_loop(self):
+
         while self.__cont:
-            user_input = input(f"{self.get_path_str()}>>>")
-            print(self.digest_input(user_input))
+            try:
+                user_input = input(f"{self.get_prompt()}")
+                print(self.digest_input(user_input))
+            except Exception as e:
+                print("System Error\n\n" + str(e) + "\n\nSystem Error")
     
     
-    def get_path_str(self):
-        return colored("Retyk","green") + colored("@","black") + colored(str(self.__path),"red")
+    def get_prompt(self):
+        return "┌──(" + colored("Retyk@" + os.environ["COMPUTERNAME"],"green") + ")" + colored("-","white") + "[" + colored(str(self.__path),"red") + "]\n└─" + colored('$ ',"red")
 
 
 
@@ -384,7 +393,7 @@ def man(name):
         elif name == "cd":
             return "Change current directory\nUsage - cd <path>\n\nNo flags supported\n"
         elif name == "help":
-            return "Get help\nUsage - help <command>\nDefault Values:\nif not command give, explain about the script\n\nNo flags supported\n"
+            return "Get help\nUsage - help <command>\nDefault Values:\nif no command given, explain about the script\n\nNo flags supported\n"
         elif name == "cat":
             return "Display content of file\nUsage - cat <flag> <path> \n\nflag explanation --\n-n - number output lines\n"
         elif name == "md":
@@ -393,6 +402,8 @@ def man(name):
             return "Deletes a directory\nUsage - rm <name> \n\nNo flags supported\n"
         elif name == "exit":
             return "Exits.\n"
+        elif name == "set":
+            return "Show and change system variables\nUsage - set <var_name>=<value>\nIf not parameters are given, print all sys vars.\nIf no value is given, print current value."
         else:
             return "Syntax Error.\nFor additional info type 'help'\n"
 
