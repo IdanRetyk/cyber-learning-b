@@ -14,7 +14,7 @@ class CMD():
         self.__my_path: str = os.environ["PATH"] + "/Users/Idan/cyber-learning-b/python;/Users/Idan/downloads;"
         
         self.interals: list[str] = ["dir","exit","help","cd","set","cat","md","rm"]
-        
+        self.cmd_comands: list[str] = ["copy","ren","echo"]
         
         self.bootloader()
         
@@ -188,7 +188,7 @@ class CMD():
             return ErrorMessage("cd", 0).get_msg()
         
         if os.path.isabs(path): # Absolute path was given
-            self.__path = path
+            self.__path = path.replace("\\",'/')
             return ""
         # Relative path
         
@@ -197,14 +197,15 @@ class CMD():
         for directory in path.split("/"):
             
             if directory == '.': # Path is the same
-                print(self.__path) 
+                pass
             elif directory == "..": # Backtrack one directory
-                if re.search("/.*/",self.__path): # If there is only one directory left, don't backtrack.
+                if re.search("[a-z]:/.+",self.__path.lower()): # If there is only one directory left, don't backtrack.
                     self.__path = "/".join(self.__path.split("/")[:-1])
             else:
                 if os.path.isdir(self.__path + "/" + directory):
                     self.__path += '/'
                     self.__path += directory
+                    self.__path.replace('\\','/')
                 else:
                     self.__path = init_path
                     return ErrorMessage("cd",1,directory).get_msg()
@@ -347,12 +348,16 @@ class CMD():
             for path in (self.__my_path.split(";") + [self.__path]):
                 
                 command_name = cmd_input[0]
-                if os.path.isfile(path + '/' + command_name) and not found_file:
-                    found_file = True
-                    if ".py" in command_name: 
-                        return subprocess.run(["python"] + cmd_input,cwd=path,text=True,stdin=fin,stdout=fout).stdout 
-                    elif ".exe" in command_name:
-                        return subprocess.run(cmd_input,cwd=path,text=True,stdin=fin,stdout=fout).stdout 
+                if ".py" in command_name: # If python file, look in hardcoded path for the file.
+                    if os.path.isfile(path + '/' + command_name) and not found_file:
+                        found_file = True 
+                        proc = subprocess.Popen(["python"] + cmd_input,cwd=path,text=True,stdin=fin,stdout=fout) 
+                    if not found_file:
+                        return f"File not found: {command_name}"
+                else:
+                    if command_name in self.cmd_comands: # If external for the shell but interal for actual cmd.
+                        proc = subprocess.Popen(["cmd.exe /c"] + cmd_input,cwd=path,text=True,stdin=fin,stdout=fout)
+                    proc =  subprocess.run(cmd_input,cwd=path,text=True,stdin=fin,stdout=fout).stdout 
                     return "Unknown command. For additional info type 'help'"
         finally:
             if fout:
@@ -374,23 +379,24 @@ class CMD():
         return colored("Retyk","green") + colored("@","black") + colored(str(self.__path),"red")
 
 
+
 def man(name):
         if name == "dir":
-            return "Display content of directory\nUsage - dir <flag> <path> \nDefault Values:\npath = current path \n\nflag explanation --\n-s - recursive"
+            return "Display content of directory\nUsage - dir <flag> <path> \nDefault Values:\npath = current path \n\nflag explanation --\n-s - recursive\n"
         elif name == "cd":
-            return "Change current directory\nUsage - cd <path>\n\nNo flags supported"
+            return "Change current directory\nUsage - cd <path>\n\nNo flags supported\n"
         elif name == "help":
-            return "Get help\nUsage - help <command>\nDefault Values:\ncommand = help\n\nNo flags supported"
+            return "Get help\nUsage - help <command>\nDefault Values:\nif not command give, explain about the script\n\nNo flags supported\n"
         elif name == "cat":
-            return "Display content of file\nUsage - cat <flag> <path> \n\nflag explanation --\n-n - number output lines"
+            return "Display content of file\nUsage - cat <flag> <path> \n\nflag explanation --\n-n - number output lines\n"
         elif name == "md":
-            return "Make a new directory\nUsage - md <flag> <name> \n\nflag explanation -- \n-c - move to directory"
+            return "Make a new directory\nUsage - md <flag> <name> \n\nflag explanation -- \n-c - move to directory\n"
         elif name == "rm":
-            return "Deletes a directory\nUsage - rm <name> \n\nNo flags supported"
+            return "Deletes a directory\nUsage - rm <name> \n\nNo flags supported\n"
         elif name == "exit":
-            return "Exits."
+            return "Exits.\n"
         else:
-            return "Syntax Error.\nFor additional info type 'help'"
+            return "Syntax Error.\nFor additional info type 'help'\n"
 
 class ErrorMessage():
     __msg: str = ""
