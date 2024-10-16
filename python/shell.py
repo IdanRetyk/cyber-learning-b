@@ -99,7 +99,7 @@ class CMD():
         
         
     
-    def dir(self, fields:list[str]) -> str:
+    def dir(self, fields:list[str],tab_count = 0) -> str:
         if len(fields) == 1: # User typed ""dir""
             return "\n".join(os.listdir(self.__path))
         fields.remove("dir")
@@ -138,12 +138,11 @@ class CMD():
             for file in listdir:
                 
                 if os.path.isdir(_dir + '/' + file):
-                    return_msg += '\n'
-                    return_msg += self.dir(["dir", _dir + '/' + file, "-s",f"*{file_type}"])
-                    return_msg += '\n'
+                    return_msg += '\n' + '\t' * tab_count
+                    return_msg += self.dir(["dir", _dir + '/' + file, "-s",f"*{file_type}"],tab_count+1)
                 else:
                     if file_type in file:
-                        return_msg += '\n'
+                        return_msg += '\n' + '\t' * tab_count
                         return_msg += file
                 
             return return_msg
