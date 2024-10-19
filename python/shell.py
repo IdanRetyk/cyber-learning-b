@@ -1,9 +1,28 @@
+"""
+
+simulating windows shell.
+Can run .exe and .py scripts simply by stating name (including .py, but excluding .exe), if in PATH.
+some command are implemented internally, some are directed to cmd. Supports any external command.
+supports redirection and pipes (non recursive).
+
+example usage:
+dir    (internal)
+copy a.txt b.txt (directed to cmd)
+bits_bytes.py
+calc
+ping www.google.com > a.txt
+
+
+built for windows OS. most of the functionally will work the same on unix-like systems, but some goofy behavior is to be expected. 
+"""
+
+
 import os,re,subprocess,random,platform
 from termcolor import colored
 
 
 class CMD():
-    # Singleton
+    # should be used a singleton
     def __init__(self):
         self.__outpath: str = ""
         self.__inpath: str = ""
@@ -12,7 +31,8 @@ class CMD():
         self.__my_path: str = os.environ["PATH"] + "/Users/Idan/cyber-learning-b/python;/Users/Idan/downloads;"
         
         self.interals: list[str] = ["dir","exit","help","cd","set","cat","md","rm"]
-        self.cmd_comands: list[str] = ["copy","ren","echo"]
+        self.cmd_comands: list[str] = ["cls", "echo", "del", "copy", "move", "type", "pause", "ver", "title", "ren", "fc"]
+
         
         self.bootloader()
         
