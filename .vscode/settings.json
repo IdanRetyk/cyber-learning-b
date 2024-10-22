@@ -11,7 +11,8 @@
         "MOUSEBUTTONDOWN",
         "outpath",
         "pygame",
-        "recive"
+        "recive",
+        "simlitniously"
     ],
     "cSpell.enableFiletypes": [
         "!markdown"

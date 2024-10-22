@@ -8,13 +8,14 @@ def recv_by_size(sock : socket.socket) -> bytes:
     #TODO actually write this function
 
 
-def send_data(data: bytes, sock: socket.socket, tid: str):
+def send_data(data: bytes, sock: socket.socket, tid: str = ""):
+    
     bytearray_data = str(len(data)).zfill(8).encode() + b'~' + data
     sock.send(bytearray_data)
-    logtcp('sent',tid, bytearray_data)
+    logtcp('sent',bytearray_data,tid )
     print("")
 
-def logtcp(dir ,tid :str, byte_data):
+def logtcp(dir ,byte_data,tid :str = "" ):
 	"""
 	log direction, tid and all TCP byte array data
 	return: void

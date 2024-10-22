@@ -87,17 +87,19 @@ class Server():
         command = fields[0]
         match command:
             case "DONE":
-                chunk_id = int(fields[1])
-                self.chunks[chunk_id].make_done()
+                # message consists of every chunk that client has finished.
+                for chunk_id in fields[1:]:
+                    self.chunks[int(chunk_id)].make_done()
                 for _ in self.clients[tid].get_cpu_count():
                     chunk = self.get_next_chunk()
                     start,end = chunk.get_range()
-                    to_send = f'NEW~{start}~{end}~{chunk.get_id()}!'.encode()
+                    to_send += f'NEW~{start}~{end}~{chunk.get_id()}!'.encode()
                     
             case "FOUND":
                 answer = int(fields[1])
                 self.found_answer(answer)
                 to_send = b'ack'
+                self._exit()
             case _:
                 to_send = b'Unknown command'
         
@@ -121,7 +123,7 @@ class Server():
                     print(f"Client {tid} disconnected")
                     finish = True
                     break
-                logtcp("recv",tid,bdata)
+                logtcp("recv",bdata,tid)
                 to_send,finish = self.handle_request(bdata,int(tid))
                 if finish:
                     break
@@ -175,6 +177,8 @@ class Server():
     
     def _exit(self):
         print("Exiting...")
+        for clinet in self.clients:
+            send_data(b"EXIT",clinet.get_sock())
 
 
 if __name__ == "__main__":
