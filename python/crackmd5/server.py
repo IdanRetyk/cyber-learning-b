@@ -1,6 +1,6 @@
 import socket,threading
 import traceback
-import sys
+import time
 from networking_helper import *
 
 
@@ -59,8 +59,8 @@ class Client_info():
 class Server():
     def __init__(self) -> None:
         self.chunks = self.get_chunks()
-        self.clients :list[Client_info] = [] # {<tid>:<socket>}
-        
+        self.clients: list[Client_info] = [] # {<tid>:<socket>}
+        self.tstart: float = time.time()
     
     def get_chunks(self) -> list[Chunk]:
         chunks: list[Chunk] = []
@@ -121,6 +121,7 @@ class Server():
                     chunk.mark_sent()
                     
             case b"FOUND":
+                self.tend: float = time.time()
                 answer = int(fields[1])
                 self.found_answer(answer)
                 self._exit()
@@ -139,8 +140,6 @@ class Server():
         finish = self.handshake(sock,int(tid))
         while not finish:
             if all_to_die:
-                print("Closing client due to server issue")
-                all_to_die = True
                 break
             try:
                 bdata: bytes = recv_by_size(sock)
@@ -207,14 +206,17 @@ class Server():
     
     
     def found_answer(self,answer:int):
-        print("FOUND ANSWER - " + str(answer))
-    
+        print("\n" + " " * 10 + "#######################################")
+        print(" " * 10 +"       ANSWER is " + str(answer).zfill(10))
+        print(" " * 10 + "#######################################")
+        print(" " * 10 + f"finding answer took {self.tend - self.tstart}s using {len(self.clients)} computers.")
+        print("\n")
     
     def _exit(self):
         global all_to_die
         print("Exiting...")
         for clinet in self.clients:
-            send_data(b"EXIT",clinet.get_sock())
+            send_data(b"EXIT",clinet.get_sock(),log=False)
         all_to_die = True
         exit()
 

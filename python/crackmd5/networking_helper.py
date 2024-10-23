@@ -14,11 +14,12 @@ def recv_by_size(sock : socket.socket) -> bytes:
     return msg
 
 
-def send_data(data: bytes, sock: socket.socket, tid: str = ""):
+def send_data(data: bytes, sock: socket.socket, tid: str = "",*,log:bool = True):
     
     bytearray_data = str(len(data)).zfill(8).encode() + b'~' + data
     sock.send(bytearray_data)
-    logtcp('sent',bytearray_data,tid )
+    if log:
+        logtcp('sent',bytearray_data,tid )
     print("")
 
 def logtcp(dir ,byte_data,tid :str = "" ):

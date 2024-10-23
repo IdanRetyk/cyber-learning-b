@@ -15,7 +15,7 @@ if DEBUG:
     
 else:
     CPU_COUNT = sys.argv[1] 
-TARGET: str = md5(b'0060000000').hexdigest()
+TARGET: str = md5(b'0170000000').hexdigest()
 PERCENT: int
 
 class Chunk():
@@ -32,7 +32,33 @@ class Chunk():
 
 
 
+def communicate_processes(subprocesses: list[subprocess.Popen[bytes]]) -> int | None:
+    """Run every process simultaneously using subprocesses.Popen().communicate()
 
+    Args:
+        subprocesses (list[subprocess.Popen[bytes]]): list fo processes
+
+    Returns:
+        int | None: return answer as int found, else return None.
+    """
+    answer :int | None = None 
+    for sp in subprocesses:
+        stdout,_ = sp.communicate()
+        # Waiting for process to terminate
+        if b"FOUND" in stdout:
+            # Found answer
+            answer = int(stdout.split(b'~')[1].decode())
+            # Kill every other subprocess
+            kill_all_processes(subprocesses)
+    return answer
+
+
+def kill_all_processes(ls: list[subprocess.Popen]):
+    for sb in ls:
+        try:
+            sb.kill()
+        except:
+            pass
 
 
 def parse_chunks(data :bytes) -> list[Chunk]:
@@ -55,33 +81,29 @@ def main():
     
     finish = False
     while not finish:
+        
+        subprocesses: list[subprocess.Popen[bytes]] = []
+        
         data = recv_by_size(cli_sock)
+        # Parse data
         if b"NEW" in data:
             chunks = parse_chunks(data)
         elif b"EXIT" in data:
+            kill_all_processes(subprocesses)
             exit()
         else:
             raise Exception("Unknown command")
-        subprocesses: list[subprocess.Popen[bytes]] = []
+
         # Create subprocess for each chunk
         for chunk in chunks:
             start,end = chunk.get_range()
             sp = subprocess.Popen(["python",f'{os.path.dirname(__file__)}/worker.py',str(start),str(end),TARGET],stdout=PIPE,stderr=PIPE)
             subprocesses.append(sp)
+        
         # Run every subprocess simultaneously
-        answer :int | None = None 
-        for sp in subprocesses:
-            stdout,_ = sp.communicate()
-            # Waiting for process to terminate
-            if "FOUND" in stdout.decode():
-                # Found answer
-                answer = int(stdout.split(b'~')[1].decode())
-                # Kill every other subprocess
-                for sp in subprocesses:
-                    try:
-                        sp.kill()
-                    except:
-                        pass
+        answer = communicate_processes(subprocesses)
+        
+        
         if answer:
             to_send = f"FOUND~{answer}".encode()
         else:
