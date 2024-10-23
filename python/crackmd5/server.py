@@ -36,6 +36,7 @@ class Chunk():
         self.__sent = False
     
     def make_done(self):
+        self.__sent = True
         self.__done = True
 
 
@@ -43,6 +44,7 @@ class Client_info():
     def __init__(self,sock: socket.socket,cpu_count: int) -> None:
         self.__sock = sock
         self.__cpu_count = cpu_count
+        self.__jobs: list[int] = [] # Every chunk_id that this client supposed to do.
     
     def get_sock(self) -> socket.socket:
         return self.__sock
@@ -55,6 +57,18 @@ class Client_info():
 
     def set_cpu_count(self, cpu_count: int):
         self.__cpu_count = cpu_count
+    
+    def add_job(self,job: int):
+        self.__jobs.append(job)
+    
+    def remove_job(self,job: int):
+        self.__jobs.remove(job)
+    
+    def have_jobs(self) -> bool:
+        return len(self.__jobs) != 0
+
+    def get_jobs(self) -> list[int]:
+        return self.__jobs
 
 class Server():
     def __init__(self) -> None:
@@ -75,6 +89,12 @@ class Server():
                 return chunk
         self._exit()
         return self.chunks[0]
+    
+    def get_client_via_sock(self, sock: socket.socket) -> Client_info:
+        for cli in self.clients:
+            if cli.get_sock() == sock:
+                return cli
+        raise ValueError()
 
 
     def handshake(self,sock: socket.socket,tid: int) -> bool:
@@ -89,6 +109,7 @@ class Server():
         to_send: bytes = b''
         for _ in range(cpu_count):
             chunk = self.get_next_chunk()
+            self.get_client_via_sock(sock).add_job(chunk.get_id())
             start,end = chunk.get_range()
             to_send += f'NEW~{start}~{end}~{chunk.get_id()}!'.encode()
             chunk.mark_sent()
@@ -109,13 +130,22 @@ class Server():
         finish = False
         fields = data.split(b'~')
         command = fields[0]
+        curr_cli: Client_info = self.clients[tid - 1]
         match command:
             case b"DONE":
                 # message consists of every chunk that client has finished.
+                #DONE~<chunk_id_1>~<chunk_id_2>~.....
+                
+                # Mark jobs as done.
                 for chunk_id in fields[1:]:
                     self.chunks[int(chunk_id)].make_done()
-                for _ in range(self.clients[tid - 1].get_cpu_count()):
+                    curr_cli.remove_job(int(chunk_id))
+                
+                # Send new jobs.
+                # NEW~<start_range>~<end_range>~<chunk_id>!
+                for _ in range(curr_cli.get_cpu_count()):
                     chunk = self.get_next_chunk()
+                    curr_cli.add_job(chunk.get_id())
                     start,end = chunk.get_range()
                     to_send += f'NEW~{start}~{end}~{chunk.get_id()}!'.encode()
                     chunk.mark_sent()
@@ -145,6 +175,10 @@ class Server():
                 bdata: bytes = recv_by_size(sock)
                 if not bdata:
                     print(f"Client {tid} disconnected")
+                    client: Client_info = self.get_client_via_sock(sock)
+                    # If client disconnect, mark all its jobs as unsent. After this, they will be reassigned.
+                    for i in client.get_jobs():
+                        self.chunks[i].mark_unsent()
                     finish = True
                     break
                 logtcp("recv",bdata,tid)

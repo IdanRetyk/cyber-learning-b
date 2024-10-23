@@ -103,7 +103,6 @@ def main():
         # Run every subprocess simultaneously
         answer = communicate_processes(subprocesses)
         
-        
         if answer:
             to_send = f"FOUND~{answer}".encode()
         else:

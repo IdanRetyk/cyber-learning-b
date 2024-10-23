@@ -4,7 +4,9 @@ a module that consists every function that is used for communications
 """
 
 def recv_by_size(sock : socket.socket) -> bytes:
-    bdata: bytes = b''
+    bdata: bytes = sock.recv(4)
+    if not bdata: # client disconnect
+        return b''
     while b'~' not in bdata:
         bdata += sock.recv(4)
     size,msg = bdata.split(b'~')
