@@ -1,6 +1,11 @@
 import socket,threading
 import traceback
+import sys
 from networking_helper import *
+
+
+
+all_to_die: bool = False
 
 
 class Chunk():
@@ -8,6 +13,7 @@ class Chunk():
     def __init__(self,range: tuple[int,int]) -> None:
         self.__id = Chunk.count
         self.__range = range
+        self.__sent: bool = False
         self.__done: bool = False
         Chunk.count += 1
     
@@ -19,6 +25,15 @@ class Chunk():
     
     def if_done(self) -> bool:
         return self.__done
+    
+    def if_sent(self) -> bool:
+        return self.__sent
+    
+    def mark_sent(self):
+        self.__sent = True
+    
+    def mark_unsent(self):
+        self.__sent = False
     
     def make_done(self):
         self.__done = True
@@ -50,13 +65,13 @@ class Server():
     def get_chunks(self) -> list[Chunk]:
         chunks: list[Chunk] = []
         for i in range(100):
-            chunks.append(Chunk((10_000_00 * i,10_000_000 * (i + 1))))
+            chunks.append(Chunk((10_000_000 * i,10_000_000 * (i + 1))))
             
         return chunks
 
     def get_next_chunk(self) -> Chunk:
         for chunk in self.chunks:
-            if not chunk.if_done():
+            if not chunk.if_sent():
                 return chunk
         self._exit()
         return self.chunks[0]
@@ -68,7 +83,16 @@ class Server():
             return True
         _,cpu_count = data
         cpu_count = int(cpu_count)
-        self.clients[tid] = Client_info(sock,cpu_count)
+        self.clients.append(Client_info(sock,cpu_count))
+        
+        # Send first chunks
+        to_send: bytes = b''
+        for _ in range(cpu_count):
+            chunk = self.get_next_chunk()
+            start,end = chunk.get_range()
+            to_send += f'NEW~{start}~{end}~{chunk.get_id()}!'.encode()
+            chunk.mark_sent()
+        send_data(to_send,sock)
         return False
     
     
@@ -86,27 +110,28 @@ class Server():
         fields = data.split(b'~')
         command = fields[0]
         match command:
-            case "DONE":
+            case b"DONE":
                 # message consists of every chunk that client has finished.
                 for chunk_id in fields[1:]:
                     self.chunks[int(chunk_id)].make_done()
-                for _ in self.clients[tid].get_cpu_count():
+                for _ in range(self.clients[tid - 1].get_cpu_count()):
                     chunk = self.get_next_chunk()
                     start,end = chunk.get_range()
                     to_send += f'NEW~{start}~{end}~{chunk.get_id()}!'.encode()
+                    chunk.mark_sent()
                     
-            case "FOUND":
+            case b"FOUND":
                 answer = int(fields[1])
                 self.found_answer(answer)
-                to_send = b'ack'
                 self._exit()
+                finish = True
             case _:
                 to_send = b'Unknown command'
         
         return to_send,finish
 
 
-    def handle_client(self,sock: socket.socket,addr: socket._Address, tid: str):
+    def handle_client(self,sock: socket.socket,addr: tuple[str,int], tid: str):
         global all_to_die
         
         finish = False
@@ -148,27 +173,37 @@ class Server():
         
         srv_sock.bind(("127.0.0.1",12344))
         srv_sock.listen(20)
-        
+
         srv_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        
+        srv_sock.settimeout(0.1)
         i = 1
-        while True:
+        try:
             print("Main Thread: before accepting...")
-            c,a = srv_sock.accept()
-            t = threading.Thread(target=self.handle_client,args=(c,a,str(i)))
-            t.start()
-            i += 1
-            threads.append(t)
-            if i > 1000:
-                print("Sever going down")
-                break
-            
-        all_to_die = True
-        print("Main Thread: waiting for all client to die")
-        for t in threads:
-            t.join()
-        srv_sock.close()
-        print("Bye..")
+            while True:
+                
+                try:
+                    
+                    c,a = srv_sock.accept()
+                    t = threading.Thread(target=self.handle_client,args=(c,a,str(i)))
+                    t.start()
+                    i += 1
+                    threads.append(t)
+                    if all_to_die:
+                        break
+                    if i > 1000:
+                        print("Sever going down")
+                        break
+                except socket.timeout:
+                    if all_to_die:
+                        break
+                
+            all_to_die = True
+            print("Main Thread: waiting for all client to die")
+            for t in threads:
+                t.join()
+        finally:
+            srv_sock.close()
+            print("Bye..")
     
     
     def found_answer(self,answer:int):
@@ -176,9 +211,12 @@ class Server():
     
     
     def _exit(self):
+        global all_to_die
         print("Exiting...")
         for clinet in self.clients:
             send_data(b"EXIT",clinet.get_sock())
+        all_to_die = True
+        exit()
 
 
 if __name__ == "__main__":

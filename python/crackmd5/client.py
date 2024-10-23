@@ -1,14 +1,21 @@
 import socket
 import threading 
 import sys
-import psutil
+import os
 import subprocess
 from subprocess import PIPE
+from hashlib import md5
 
 from networking_helper import *
 
-CPU_COUNT = sys.argv[1] 
-TARGET: int
+DEBUG = False
+
+if DEBUG:
+    CPU_COUNT = 1
+    
+else:
+    CPU_COUNT = sys.argv[1] 
+TARGET: str = md5(b'0060000000').hexdigest()
 PERCENT: int
 
 class Chunk():
@@ -32,7 +39,9 @@ def parse_chunks(data :bytes) -> list[Chunk]:
     chunks = data.split(b'!')
     to_return: list[Chunk] = []
     for chunk in chunks:
-        _,start,end,id = [int(f) for f in chunk.split(b'~')]
+        if not chunk:
+            continue
+        start,end,id = [int(f) for f in chunk.split(b'~')[1:]]
         to_return.append(Chunk((start,end),id))
     return to_return
 
@@ -57,7 +66,7 @@ def main():
         # Create subprocess for each chunk
         for chunk in chunks:
             start,end = chunk.get_range()
-            sp = subprocess.Popen(f"python worker.py {start} {end} {TARGET}",stdout=PIPE,stderr=PIPE)
+            sp = subprocess.Popen(["python",f'{os.path.dirname(__file__)}/worker.py',str(start),str(end),TARGET],stdout=PIPE,stderr=PIPE)
             subprocesses.append(sp)
         # Run every subprocess simultaneously
         answer :int | None = None 
@@ -65,10 +74,18 @@ def main():
             stdout,_ = sp.communicate()
             # Waiting for process to terminate
             if "FOUND" in stdout.decode():
+                # Found answer
                 answer = int(stdout.split(b'~')[1].decode())
+                # Kill every other subprocess
+                for sp in subprocesses:
+                    try:
+                        sp.kill()
+                    except:
+                        pass
         if answer:
             to_send = f"FOUND~{answer}".encode()
         else:
+            print("#####\nDONE chunk!!!!!!\n######")
             to_send = f"DONE"
             for chunk in chunks:
                 to_send += f"~{chunk.get_id()}"
