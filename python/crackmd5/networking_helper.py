@@ -12,7 +12,7 @@ def recv_by_size(sock : socket.socket,tid:str ="") -> bytes:
     size,msg = bdata.split(b'~')
     while len(msg) != int(size.decode()):
         msg += sock.recv(512)
-    logtcp("recv",msg)
+    logtcp("recv",msg,tid)
     return msg
 
 
