@@ -1,10 +1,16 @@
-import socket,threading
+import socket
+import threading
 import traceback
 import time
+import sys
 from networking_helper import *
 
 
+if len(sys.argv) != 2:
+    print("Wrong Usage.")
+    exit()
 
+TARGET: str = sys.argv[1]
 all_to_die: bool = False
 
 
@@ -98,12 +104,15 @@ class Server():
 
 
     def handshake(self,sock: socket.socket,tid: int) -> bool:
-        data = recv_by_size(sock).split(b'~')
+        data = recv_by_size(sock,str(tid)).split(b'~')
         if not data:
             return True
         _,cpu_count = data
         cpu_count = int(cpu_count)
         self.clients.append(Client_info(sock,cpu_count))
+        send_data(TARGET.encode(),sock,str(tid))
+        recv_by_size(sock,str(tid))
+        
         
         # Send first chunks
         to_send: bytes = b''
@@ -113,7 +122,7 @@ class Server():
             start,end = chunk.get_range()
             to_send += f'NEW~{start}~{end}~{chunk.get_id()}!'.encode()
             chunk.mark_sent()
-        send_data(to_send,sock)
+        send_data(to_send,sock,str(tid))
         return False
     
     
@@ -172,7 +181,7 @@ class Server():
             if all_to_die:
                 break
             try:
-                bdata: bytes = recv_by_size(sock)
+                bdata: bytes = recv_by_size(sock,str(tid))
                 if not bdata:
                     print(f"Client {tid} disconnected")
                     client: Client_info = self.get_client_via_sock(sock)
@@ -181,7 +190,6 @@ class Server():
                         self.chunks[i].mark_unsent()
                     finish = True
                     break
-                logtcp("recv",bdata,tid)
                 to_send,finish = self.handle_request(bdata,int(tid))
                 if finish:
                     break

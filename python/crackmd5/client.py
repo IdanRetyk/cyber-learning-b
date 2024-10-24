@@ -1,6 +1,5 @@
 import socket
-import threading 
-import sys
+import multiprocessing
 import os
 import subprocess
 from subprocess import PIPE
@@ -8,15 +7,14 @@ from hashlib import md5
 
 from networking_helper import *
 
-DEBUG = False
+DEBUG = True
 
 if DEBUG:
     CPU_COUNT = 1
     
 else:
-    CPU_COUNT = sys.argv[1] 
-TARGET: str = md5(b'0170000000').hexdigest()
-PERCENT: int
+    CPU_COUNT = multiprocessing.cpu_count()
+TARGET: str
 
 class Chunk():
     def __init__(self,range: tuple[int,int],id: int) -> None:
@@ -29,7 +27,6 @@ class Chunk():
     
     def get_id(self) -> int:
         return self.__id
-
 
 
 def communicate_processes(subprocesses: list[subprocess.Popen[bytes]]) -> int | None:
@@ -72,12 +69,19 @@ def parse_chunks(data :bytes) -> list[Chunk]:
     return to_return
 
 
+def handshake(sock: socket.socket):
+    global TARGET
+    send_data(f'HELLO~{CPU_COUNT}'.encode(),sock)
+    TARGET = recv_by_size(sock).decode()
+    send_data(b'ACK',sock)
+
+
 def main():
     cli_sock = socket.socket()
     cli_sock.connect(("127.0.0.1",12344))
     
     # Handshake
-    send_data(f'HELLO~{CPU_COUNT}'.encode(),cli_sock)
+    handshake(cli_sock)
     
     finish = False
     while not finish:
@@ -85,6 +89,12 @@ def main():
         subprocesses: list[subprocess.Popen[bytes]] = []
         
         data = recv_by_size(cli_sock)
+        
+        if not data:
+            # Server disconnect
+            cli_sock.close()
+            exit()
+        
         # Parse data
         if b"NEW" in data:
             chunks = parse_chunks(data)

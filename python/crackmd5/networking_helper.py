@@ -3,7 +3,7 @@ import socket
 a module that consists every function that is used for communications
 """
 
-def recv_by_size(sock : socket.socket) -> bytes:
+def recv_by_size(sock : socket.socket,tid:str ="") -> bytes:
     bdata: bytes = sock.recv(4)
     if not bdata: # client disconnect
         return b''
