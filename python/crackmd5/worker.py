@@ -14,7 +14,7 @@ TARGET: str = sys.argv[3]
 
 
 for i in range(start,end):
-    if md5(str(i).zfill(10).encode()).hexdigest() == TARGET:
+    if md5(str(i).zfill(10).encode()).hexdigest().lower() == TARGET.lower():
             print(f"FOUND~{i}")
             exit()
 print("NO")

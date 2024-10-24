@@ -76,7 +76,10 @@ class Client_info():
     def get_jobs(self) -> list[int]:
         return self.__jobs
 
+
+
 class Server():
+    
     def __init__(self) -> None:
         self.chunks = self.get_chunks()
         self.clients: list[Client_info] = [] # {<tid>:<socket>}
@@ -84,17 +87,17 @@ class Server():
     
     def get_chunks(self) -> list[Chunk]:
         chunks: list[Chunk] = []
-        for i in range(100):
+        for i in range(1000):
             chunks.append(Chunk((10_000_000 * i,10_000_000 * (i + 1))))
             
         return chunks
 
-    def get_next_chunk(self) -> Chunk:
+    def get_next_chunk(self) -> Chunk | None: 
+        global all_to_die
         for chunk in self.chunks:
             if not chunk.if_sent():
                 return chunk
-        self._exit()
-        return self.chunks[0]
+        return None
     
     def get_client_via_sock(self, sock: socket.socket) -> Client_info:
         for cli in self.clients:
@@ -118,6 +121,9 @@ class Server():
         to_send: bytes = b''
         for _ in range(cpu_count):
             chunk = self.get_next_chunk()
+            if not chunk:
+                # Finished
+                return True
             self.get_client_via_sock(sock).add_job(chunk.get_id())
             start,end = chunk.get_range()
             to_send += f'NEW~{start}~{end}~{chunk.get_id()}!'.encode()
@@ -154,11 +160,16 @@ class Server():
                 # NEW~<start_range>~<end_range>~<chunk_id>!
                 for _ in range(curr_cli.get_cpu_count()):
                     chunk = self.get_next_chunk()
-                    curr_cli.add_job(chunk.get_id())
-                    start,end = chunk.get_range()
-                    to_send += f'NEW~{start}~{end}~{chunk.get_id()}!'.encode()
-                    chunk.mark_sent()
-                    
+                    if chunk:
+                        curr_cli.add_job(chunk.get_id())
+                        start,end = chunk.get_range()
+                        to_send += f'NEW~{start}~{end}~{chunk.get_id()}!'.encode()
+                        chunk.mark_sent()
+                        
+                    else:
+                        finish = True
+                if finish:
+                    self._exit()
             case b"FOUND":
                 self.tend: float = time.time()
                 answer = int(fields[1])
@@ -232,7 +243,7 @@ class Server():
                     if all_to_die:
                         break
                     if i > 1000:
-                        print("Sever going down")
+                        print("Server going down")
                         break
                 except socket.timeout:
                     if all_to_die:

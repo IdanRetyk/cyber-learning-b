@@ -7,7 +7,7 @@ from hashlib import md5
 
 from networking_helper import *
 
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     CPU_COUNT = 1
