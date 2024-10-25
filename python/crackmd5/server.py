@@ -12,7 +12,7 @@ if len(sys.argv) != 2:
 
 TARGET: str = sys.argv[1]
 all_to_die: bool = False
-
+CHUNK_SIZE = 10_000_000
 
 class Chunk():
     count: int = 0
@@ -47,10 +47,11 @@ class Chunk():
 
 
 class Client_info():
+    #Struct
     def __init__(self,sock: socket.socket,cpu_count: int) -> None:
         self.__sock = sock
         self.__cpu_count = cpu_count
-        self.__jobs: list[int] = [] # Every chunk_id that this client supposed to do.
+        self.__jobs: list[int] = [] # Every chunk_id that this client is assigned.
     
     def get_sock(self) -> socket.socket:
         return self.__sock
@@ -69,9 +70,6 @@ class Client_info():
     
     def remove_job(self,job: int):
         self.__jobs.remove(job)
-    
-    def have_jobs(self) -> bool:
-        return len(self.__jobs) != 0
 
     def get_jobs(self) -> list[int]:
         return self.__jobs
@@ -82,12 +80,12 @@ class Server():
     
     def __init__(self) -> None:
         self.chunks = self.get_chunks()
-        self.clients: list[Client_info] = [] # {<tid>:<socket>}
+        self.clients: list[Client_info] = [] 
         self.tstart: float = time.time()
     
     def get_chunks(self) -> list[Chunk]:
         chunks: list[Chunk] = []
-        for i in range(1000):
+        for i in range(10_000_000_000//CHUNK_SIZE):
             chunks.append(Chunk((10_000_000 * i,10_000_000 * (i + 1))))
             
         return chunks
@@ -206,6 +204,11 @@ class Server():
                     break
                 if to_send:
                     send_data(to_send,sock,tid)
+                
+                if self.chunks[-1].if_done():
+                    # Searched all the chunks
+                    finish = True
+                    print("-1")
                 
             except socket.error as err:
                 print(f'Socket Error exit client loop: err:  {err}')
