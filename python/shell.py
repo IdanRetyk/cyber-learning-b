@@ -1,4 +1,5 @@
 """
+__author__: Idan Retyk
 
 simulating windows shell.
 Can run .exe and .py scripts simply by stating name (including .py, but excluding .exe), if in PATH.
@@ -79,7 +80,7 @@ class CMD():
             return output
     
     def handle_pipe(self,first :str,second: str) -> str:
-        # If first command is internal simply call digest input twice.
+        # If first command is internal simply call digest input twice and store pipe value in temp file.
         if first.split()[0] in self.interals: 
             file_name = str(random.randint(1000,9999)) + '.txt'
             while os.path.isfile(self.__path + '/' + file_name):
@@ -114,7 +115,7 @@ class CMD():
 
         except subprocess.TimeoutExpired:
             p2.kill() # type:ignore
-            outs, errs = p2.communicate() # type:ignore
+            outs, _ = p2.communicate() # type:ignore
             return ""
         
         
