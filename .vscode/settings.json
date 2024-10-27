@@ -16,5 +16,9 @@
     ],
     "cSpell.enableFiletypes": [
         "!markdown"
-    ]
+    ],
+    "files.associations": {
+        ".fantomasignore": "ignore",
+        "stdlib.h": "c"
+    }
 }
