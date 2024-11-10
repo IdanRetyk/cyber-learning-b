@@ -7,7 +7,7 @@ some command are implemented internally, some are directed to cmd. Supports any 
 supports redirection and pipes (non recursive).
 
 example usage:
-dir    (internal)
+dir -s  (internal)
 copy a.txt b.txt (directed to cmd)
 bits_bytes.py
 calc
@@ -23,7 +23,7 @@ from termcolor import colored
 
 
 class CMD():
-    # should be used a singleton
+    # should be used as a singleton
     def __init__(self):
         self.__outpath: str = ""
         self.__inpath: str = ""
@@ -375,7 +375,7 @@ class CMD():
                 if command_name in self.cmd_comands: # If external for the shell but interal for actual cmd.
                     proc = subprocess.Popen(["cmd.exe","/c"] + cmd_input,cwd=self.__path,text=True,stdin=fin,stdout=fout)
                 else:
-                    proc =  subprocess.Popen(cmd_input + [".exe"],cwd=self.__path,text=True,stdin=fin,stdout=fout)
+                    proc =  subprocess.Popen([i + ".exe" for i in cmd_input],cwd=self.__path,text=True,stdin=fin,stdout=fout)
                 
             
             if pipe == 1:
