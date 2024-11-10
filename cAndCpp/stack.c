@@ -8,6 +8,16 @@ typedef struct Node
     struct Node *next;
 }Node ;
 
+
+typedef struct Stack
+{
+    Node* head;
+    int sp;
+
+    
+}Stack ;
+
+
 int main(){
     Node* node1 = ( Node*)malloc(sizeof(Node));
     Node* node2 = ( Node*)malloc(sizeof(Node));
