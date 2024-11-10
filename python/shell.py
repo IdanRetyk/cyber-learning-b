@@ -375,7 +375,7 @@ class CMD():
                 if command_name in self.cmd_comands: # If external for the shell but interal for actual cmd.
                     proc = subprocess.Popen(["cmd.exe","/c"] + cmd_input,cwd=self.__path,text=True,stdin=fin,stdout=fout)
                 else:
-                    proc =  subprocess.Popen(cmd_input,cwd=self.__path,text=True,stdin=fin,stdout=fout)
+                    proc =  subprocess.Popen(cmd_input + [".exe"],cwd=self.__path,text=True,stdin=fin,stdout=fout)
                 
             
             if pipe == 1:
