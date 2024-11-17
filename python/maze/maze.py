@@ -1,3 +1,20 @@
+"""
+Solving a maze using DFS.
+
+the maze is in maze.png
+the solution is written in solved.png
+Every time you run the script the color of the path will change, and it will override the current solved.png, if exists.
+
+
+Solving procedure:
+load the maze from maze.png to a 2d array of points.
+perform DFS, while saving the path.
+replicate the original image, than every point in correct path, draw it in a pre-set COLOR.
+save the new image to solved.png.
+"""
+
+
+
 from platform import system
 from PIL import Image
 from collections import deque
@@ -82,7 +99,7 @@ def load_img_as_array(image_path = PATH):
 
 
 
-def deep_first_search(link,stack):
+def dfs(link,stack):
     # Performs a depth-first search
     cont = True
     while(cont):
@@ -118,7 +135,7 @@ def draw_solution(link):
     #replicates the original maze            
     for i in range( img.size[0]):
         for j in range(img.size[1]):
-            pixels[i, j] = img_arr[i][j]
+            pixels[i, j] = img_arr[i][j] #type:ignore
     
     key = Point(639,0)
 
@@ -126,7 +143,7 @@ def draw_solution(link):
     while (key in link.keys()):
         
         value = link[key]
-        pixels[key.x,key.y] = COLOR
+        pixels[key.x,key.y] = COLOR #type:ignore
         key = value
 
     img.save(rf"{PATH}solved.png")
@@ -150,7 +167,7 @@ def main():
     visited[639][0] = True
 
     start = time.time()
-    deep_first_search(link,stack)
+    dfs(link,stack)
     end = time.time()
     st = ""
     print(f"{st:-^30}")
