@@ -1,4 +1,14 @@
-yud alef cyber (c# and python)
+**yud alef-yud bet cyber (c# and python)**
+
+Contains: 
+ * c, and c++ practice
+ * python semi-projects. 
+ * many CTFs solutions (pwnable.kr, overthewire,picoCTF, etc)
+ * school work. c# dataStructers, and html website.
+ * many project related to networking, some are tasks for school, some are personal project, for fun or practice.
+ * few project related to AES and RSA, with networking.
+ * functioning poker multiplyaer game.
+
 
 most notable projects:
  - networks/2.7: Trojan horse
