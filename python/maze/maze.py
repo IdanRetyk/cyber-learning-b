@@ -21,6 +21,9 @@ from collections import deque
 import time,random
 import pathlib
 
+
+
+
 project_folder = str(pathlib.Path(__file__).parent.resolve())
 sys = system()
 if sys == "Darwin":
@@ -34,21 +37,21 @@ else:
 COLOR = tuple([random.randint(0,255) for _ in range(3)]) #random color
 
 class Point:
-    def __init__(self,x,y) :
-        self.x = x
-        self.y = y
+    def __init__(self,x: int,y: int) :
+        self.x: int = x
+        self.y: int = y
         
-    def GetDown(self):
+    def get_down(self):
         return Point(self.x,self.y + 1)
-    def GetUp(self):
+    def get_up(self):
         return Point(self.x,self.y - 1)
-    def GetLeft(self):
+    def get_left(self):
         return Point(self.x - 1,self.y)
-    def GetRight(self):
+    def get_right(self):
         return Point(self.x + 1, self.y)
     
     @staticmethod
-    def GetDirection(prev,curr):
+    def get_direction(prev,curr) -> str:
         if (prev.x == curr.x):
             if (prev.y + 1 == curr.y):
                 return "Down"
@@ -60,7 +63,7 @@ class Point:
             else:
                 return "Left"
     
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool :
         if isinstance(other, Point):
             return self.x == other.x and self.y == other.y
         return False
@@ -68,12 +71,12 @@ class Point:
     def __hash__(self):
         return hash(self.x + self.y)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.x},{self.y}"
     
     
     
-    def IsValid(self):
+    def is_valid(self) -> bool:
         global img_arr,visited
         if self.x > 640 or self.x < 0 or self.y > 640 or self.y < 0:
             return False
@@ -85,41 +88,44 @@ class Point:
 # end of class
 
 def load_img_as_array(image_path = PATH):
-    img = Image.open(rf"{image_path}maze.png").convert("RGB")
+    img : Image.Image = Image.open(rf"{image_path}maze.png").convert("RGB")
     width, height = img.size
     pixels = img.load()
     img_arr = []
     for y in range(height):
         row = []
         for x in range(width):
-            pixel_value = pixels[x, y]
+            pixel_value = pixels[x, y] # type:ignore
             row.append(pixel_value)
         img_arr.append(row)
     return img_arr
 
 
 
-def dfs(link,stack):
+def dfs(link: dict[Point,Point],stack: deque[tuple[Point,Point]]):
     # Performs a depth-first search
-    cont = True
+    cont: bool = True
     while(cont):
+        prev : Point 
+        curr: Point 
         prev,curr = stack.pop()
-        if curr.IsValid():
+        
+        if curr.is_valid():
             if curr.x == 1 and curr.y == 640:
                 cont = False
                 draw_solution(link)
                 break
             
             link[prev] = curr
-            direction = Point.GetDirection(prev,curr)
+            direction = Point.get_direction(prev,curr)
             if (direction != "Left"):
-                stack.append((curr, curr.GetRight()))
+                stack.append((curr, curr.get_right()))
             if (direction != "Down"):
-                stack.append((curr, curr.GetUp()))
+                stack.append((curr, curr.get_up()))
             if (direction != "Right"):
-                stack.append((curr, curr.GetLeft()))
+                stack.append((curr, curr.get_left()))
             if (direction != "Up"):
-                stack.append((curr, curr.GetDown()))
+                stack.append((curr, curr.get_down()))
             
             
         
@@ -127,9 +133,9 @@ def dfs(link,stack):
 
     
 
-def draw_solution(link):
+def draw_solution(link : dict[Point,Point]):
     # Draws the solution path
-    img = Image.new("RGB", (641, 641))
+    img: Image.Image = Image.new("RGB", (641, 641))
     pixels = img.load()
 
     #replicates the original maze            
@@ -156,13 +162,13 @@ def main():
     
     
     visited = [[False for _ in range(641)] for _ in range(641)]
-    link = {Point(-1,-1):Point(639,0)}
+    link: dict[Point,Point] = {Point(-1,-1):Point(639,0)}
     
-    stack = deque()
+    stack: deque[tuple[Point,Point]] = deque()
     
-    start_point = Point(639,0)
+    start_point: Point = Point(639,0)
     
-    stack.append((start_point,start_point.GetDown()))
+    stack.append((start_point,start_point.get_down()))
     
     visited[639][0] = True
 
