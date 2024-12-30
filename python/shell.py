@@ -107,7 +107,7 @@ class CMD():
         p1.stdout.close() # type:ignore
         print("Before communicate")
         try:
-            outs, errs = p2.communicate() # type:ignore
+            outs, _ = p2.communicate() # type:ignore
             print("After Communicate")
             if outs:
                 print(outs)
